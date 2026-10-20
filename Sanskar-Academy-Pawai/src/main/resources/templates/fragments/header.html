@@ -1,0 +1,22 @@
+<div th:fragment="header">
+    <nav class="navbar navbar-dark shadow"
+         style="background: linear-gradient(90deg, #002147, #00509E);">
+
+        <div class="container-fluid position-relative">
+
+            <!-- Centered Title -->
+            <div class="position-absolute top-50 start-50 translate-middle text-white fw-bold fs-4">
+                🎓 Sanskar Academy Classes
+            </div>
+
+            <!-- Right Side -->
+            <div class="ms-auto d-flex align-items-center">
+                <span class="text-white me-3">Welcome, Admin</span>
+                <a href="@{/logout}" class="btn btn-outline-light btn-sm">
+                    Logout
+                </a>
+            </div>
+
+        </div>
+    </nav>
+</div>

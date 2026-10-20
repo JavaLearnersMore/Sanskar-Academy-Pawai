@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Finance | Sanskar Academy</title>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            background-color: #f4f6f9;
+        }
+
+        .card {
+            border-radius: 12px;
+        }
+
+        .stat-card {
+            transition: 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- Header -->
+<div th:replace="~{fragments/header :: header}"></div>
+
+<div class="container-fluid">
+    <div class="row">
+
+        <!-- Sidebar -->
+        <div class="col-md-2 p-0">
+            <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-10 p-4">
+
+            <h2 class="mb-4">💰 Finance Management</h2>
+
+            <!-- Summary Cards -->
+            <div class="row">
+
+                <!-- Income -->
+                <div class="col-md-4 mb-4">
+                    <div class="card shadow stat-card bg-success text-white">
+                        <div class="card-body">
+                            <h6>Total Income</h6>
+                            <h3>₹ <span th:text="${income}">0</span></h3>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Expenses -->
+                <div class="col-md-4 mb-4">
+                    <div class="card shadow stat-card bg-danger text-white">
+                        <div class="card-body">
+                            <h6>Total Expenses</h6>
+                            <h3>₹ <span th:text="${expenses}">0</span></h3>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Profit -->
+                <div class="col-md-4 mb-4">
+                    <div class="card shadow stat-card bg-primary text-white">
+                        <div class="card-body">
+                            <h6>Net Profit</h6>
+                            <h3>₹ <span th:text="${profit}">0</span></h3>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Chart Section -->
+            <div class="card shadow mt-4">
+                <div class="card-body">
+                    <h5 class="mb-3">Finance Overview</h5>
+                    <canvas id="financeChart" style="max-height:350px;"></canvas>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Footer -->
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script th:inline="javascript">
+/*<![CDATA[*/
+
+    const income = Number(/*[[${income}]]*/ 0);
+    const expenses = Number(/*[[${expenses}]]*/ 0);
+    const profit = Number(/*[[${profit}]]*/ 0);
+
+    const ctx = document.getElementById('financeChart').getContext('2d');
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Income', 'Expenses', 'Profit'],
+            datasets: [{
+                label: 'Finance Summary',
+                data: [income, expenses, profit],
+                backgroundColor: [
+                    '#198754',
+                    '#dc3545',
+                    '#0d6efd'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+/*]]>*/
+</script>
+
+</body>
+</html>
