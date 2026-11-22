@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Homework | Sanskar Academy</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link th:href="@{/css/portal.css}" rel="stylesheet">
+</head>
+<body class="portal-body">
+<div th:replace="~{fragments/header :: header}"></div>
+<div th:replace="~{fragments/portal-nav :: nav(homework)}"></div>
+<div class="portal-wrap">
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+    <h3 class="mb-3">&#128221; Homework</h3>
+    <div th:replace="~{learn/parts :: picker(${base}, ${base + '/homework'})}"></div>
+    <div th:if="${child == null}" th:unless="${parentView}" class="alert alert-info">You are not in a class yet.</div>
+    <div th:if="${#lists.isEmpty(rows)}" class="soft-card"><div class="card-pad text-muted">No homework yet.</div></div>
+    <div class="soft-card mb-3" th:each="r : ${rows}"><div class="card-pad">
+        <div class="d-flex justify-content-between flex-wrap gap-2">
+            <div>
+                <b th:text="${r.homework.title}"></b>
+                <div class="small text-muted" th:text="${r.homework.subject.subjectName + ' | Teacher: ' + (r.homework.createdBy != null ? r.homework.createdBy.fullName : '-') + ' | Due ' + r.homework.dueDate}"></div>
+            </div>
+            <div><span class="badge" th:classappend="${r.badge}" th:text="${r.status}"></span></div>
+        </div>
+        <p class="mt-2 mb-1" th:if="${r.homework.description}" style="white-space:pre-wrap" th:text="${r.homework.description}"></p>
+        <p class="mb-1" th:if="${r.homework.attachmentPath}"><a th:href="@{'/files/homework/' + ${r.homework.id}}" th:text="${'Download: ' + r.homework.attachmentName}"></a></p>
+        <div th:if="${r.checked}" class="alert alert-success py-2 mb-0">
+            <b th:if="${r.submission.marks != null}" th:text="${'Marks: ' + r.submission.marks + (r.homework.maxMarks != null ? ' / ' + r.homework.maxMarks : '')}"></b>
+            <span th:if="${r.submission.remark}" th:text="${' - ' + r.submission.remark}"></span>
+        </div>
+        <div th:if="${r.submitted and !r.checked}" class="small text-muted mt-1" th:text="${'Submitted ' + #temporals.format(r.submission.submittedAt, 'dd MMM, HH:mm')}"></div>
+        <form th:if="${!parentView and !r.checked}" th:action="@{'/student/homework/' + ${r.homework.id} + '/submit'}" method="post" enctype="multipart/form-data" class="mt-2">
+            <textarea name="answer" class="form-control mb-2" rows="2" maxlength="2000" placeholder="Write your answer (optional if you attach a file)" th:text="${r.submission != null} ? ${r.submission.answerText} : ''"></textarea>
+            <div class="d-flex gap-2 flex-wrap">
+                <input type="file" name="file" class="form-control" style="max-width:360px">
+                <button class="btn btn-primary btn-sm" th:text="${r.submitted} ? 'Re-submit' : 'Submit'"></button>
+            </div>
+            <div class="small text-muted mt-1" th:if="${r.submission != null and r.submission.filePath != null}" th:text="${'Current file: ' + r.submission.fileName}"></div>
+        </form>
+    </div></div>
+
+</div>
+</body>
+</html>

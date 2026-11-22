@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Syllabus Tracker | Sanskar Academy</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link th:href="@{/css/portal.css}" rel="stylesheet">
+</head>
+<body class="portal-body">
+<div th:replace="~{fragments/header :: header}"></div>
+<div th:replace="~{fragments/portal-nav :: nav(syllabus)}"></div>
+<div class="portal-wrap">
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+    <h3 class="mb-3">&#128215; Syllabus Tracker</h3>
+    <div th:if="${#lists.isEmpty(list)}" class="alert alert-info">You have no subjects yet.</div>
+    <div class="soft-card mb-3" th:each="sp : ${list}"><div class="card-pad">
+        <div class="d-flex justify-content-between flex-wrap">
+            <h5 th:text="${sp.subject.classEntity.className + ' - ' + sp.subject.subjectName}"></h5>
+            <span th:text="${sp.done + ' / ' + sp.total + ' chapters (' + sp.percent + '%)'}"></span>
+        </div>
+        <div class="progress mb-1" style="height:10px"><div class="progress-bar bg-success" th:style="${'width:' + sp.percent + '%'}"></div></div>
+        <div th:if="${sp.behind > 0}" class="small text-danger mb-2" th:text="${sp.behind + ' chapter(s) are behind the planned date'}"></div>
+        <table class="table table-sm align-middle mt-2" th:unless="${#lists.isEmpty(sp.chapters)}">
+            <thead><tr><th>#</th><th>Chapter</th><th>Planned</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+            <tr th:each="c : ${sp.chapters}">
+                <td th:text="${c.orderNo}"></td>
+                <td th:text="${c.title}"></td>
+                <td>
+                    <form th:action="@{'/teacher/syllabus/' + ${c.id} + '/plan'}" method="post" class="d-flex gap-1">
+                        <input type="date" name="planned" class="form-control form-control-sm" style="width:150px" th:value="${c.plannedDate}">
+                        <button class="btn btn-sm btn-outline-secondary">Set</button>
+                    </form>
+                </td>
+                <td>
+                    <span th:if="${c.completedOn != null}" class="badge bg-success" th:text="${'Done ' + c.completedOn}"></span>
+                    <span th:if="${c.completedOn == null and c.plannedDate != null and c.plannedDate.isBefore(today)}" class="badge bg-danger">Behind</span>
+                    <span th:if="${c.completedOn == null and (c.plannedDate == null or !c.plannedDate.isBefore(today))}" class="badge bg-light text-dark border">Pending</span>
+                </td>
+                <td class="text-end text-nowrap">
+                    <form th:if="${c.completedOn == null}" th:action="@{'/teacher/syllabus/' + ${c.id} + '/done'}" method="post" class="d-inline">
+                        <button class="btn btn-sm btn-success">Mark done</button></form>
+                    <form th:if="${c.completedOn != null}" th:action="@{'/teacher/syllabus/' + ${c.id} + '/reopen'}" method="post" class="d-inline">
+                        <button class="btn btn-sm btn-outline-secondary">Re-open</button></form>
+                    <form th:action="@{'/teacher/syllabus/' + ${c.id} + '/delete'}" method="post" class="d-inline" onsubmit="return confirm('Remove chapter?')">
+                        <button class="btn btn-sm btn-outline-danger">&times;</button></form>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        <form th:action="@{/teacher/syllabus/add}" method="post" class="mt-2">
+            <input type="hidden" name="subjectId" th:value="${sp.subject.id}">
+            <label class="form-label small">Add chapters (one chapter per line)</label>
+            <textarea name="chapters" class="form-control mb-2" rows="3" placeholder="Chapter 1 - Real numbers&#10;Chapter 2 - Polynomials"></textarea>
+            <button class="btn btn-sm btn-primary">Add chapters</button>
+        </form>
+    </div></div>
+
+</div>
+</body>
+</html>

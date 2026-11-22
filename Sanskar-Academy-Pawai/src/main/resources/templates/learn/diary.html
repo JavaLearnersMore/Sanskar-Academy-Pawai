@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Class Diary | Sanskar Academy</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link th:href="@{/css/portal.css}" rel="stylesheet">
+</head>
+<body class="portal-body">
+<div th:replace="~{fragments/header :: header}"></div>
+<div th:replace="~{fragments/portal-nav :: nav(diary)}"></div>
+<div class="portal-wrap">
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+    <h3 class="mb-3">&#128210; Teacher Remarks</h3>
+    <div th:replace="~{learn/parts :: picker(${base}, ${base + '/diary'})}"></div>
+    <div th:if="${#lists.isEmpty(list)}" class="soft-card"><div class="card-pad text-muted">No remarks yet.</div></div>
+    <div class="soft-card mb-2" th:each="e : ${list}"><div class="card-pad py-2">
+        <span class="badge" th:classappend="${e.category.name() == 'POSITIVE'} ? 'bg-success' : (${e.category.name() == 'CONCERN'} ? 'bg-danger' : 'bg-secondary')" th:text="${e.category}"></span>
+        <span class="small text-muted ms-2" th:text="${#temporals.format(e.createdAt, 'dd MMM yyyy') + ' - ' + e.teacher.fullName}"></span>
+        <div th:text="${e.text}"></div>
+    </div></div>
+
+</div>
+</body>
+</html>

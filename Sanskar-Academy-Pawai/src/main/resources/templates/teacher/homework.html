@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Homework | Sanskar Academy</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link th:href="@{/css/portal.css}" rel="stylesheet">
+</head>
+<body class="portal-body">
+<div th:replace="~{fragments/header :: header}"></div>
+<div th:replace="~{fragments/portal-nav :: nav(homework)}"></div>
+<div class="portal-wrap">
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+    <h3 class="mb-3">&#128221; Homework &amp; Assignments</h3>
+    <div class="soft-card mb-3"><div class="card-pad">
+        <h5>Give new homework</h5>
+        <div th:if="${#lists.isEmpty(subjects)}" class="text-muted">You have no subjects yet. Ask the admin to assign subjects to you.</div>
+        <form th:unless="${#lists.isEmpty(subjects)}" th:action="@{/teacher/homework}" method="post" enctype="multipart/form-data" class="row g-2">
+            <div class="col-md-4"><label class="form-label small">Subject</label>
+                <select name="subjectId" class="form-select" required>
+                    <option th:each="s : ${subjects}" th:value="${s.id}" th:text="${s.classEntity.className + ' - ' + s.subjectName}"></option>
+                </select></div>
+            <div class="col-md-5"><label class="form-label small">Title</label><input name="title" class="form-control" maxlength="200" required></div>
+            <div class="col-md-3"><label class="form-label small">Due date</label><input type="date" name="dueDate" class="form-control" required></div>
+            <div class="col-12"><label class="form-label small">Instructions</label><textarea name="description" class="form-control" rows="2" maxlength="2000"></textarea></div>
+            <div class="col-md-3"><label class="form-label small">Maximum marks (optional)</label><input type="number" min="1" name="maxMarks" class="form-control"></div>
+            <div class="col-md-6"><label class="form-label small">Attach file (optional - PDF, image, Word, Excel, PowerPoint, up to 8 MB)</label><input type="file" name="file" class="form-control"></div>
+            <div class="col-md-3 d-flex align-items-end"><button class="btn btn-primary w-100">Give homework</button></div>
+        </form>
+    </div></div>
+
+    <div class="soft-card"><div class="card-pad">
+        <h5>My homework</h5>
+        <div th:if="${#lists.isEmpty(list)}" class="text-muted">Nothing given yet.</div>
+        <div class="table-responsive" th:unless="${#lists.isEmpty(list)}">
+        <table class="table table-sm align-middle">
+            <thead><tr><th>Title</th><th>Class / Subject</th><th>Due</th><th>Submitted</th><th></th></tr></thead>
+            <tbody>
+            <tr th:each="h : ${list}">
+                <td th:text="${h.title}"></td>
+                <td th:text="${h.subject.classEntity.className + ' - ' + h.subject.subjectName}"></td>
+                <td><span th:text="${h.dueDate}"></span> <span class="badge bg-danger" th:if="${h.dueDate.isBefore(today)}">past</span></td>
+                <td th:text="${counts[h.id][0] + ' / ' + counts[h.id][1]}"></td>
+                <td class="text-end text-nowrap">
+                    <a class="btn btn-sm btn-outline-primary" th:href="@{'/teacher/homework/' + ${h.id}}">Check</a>
+                    <form class="d-inline" th:action="@{'/teacher/homework/' + ${h.id} + '/delete'}" method="post" onsubmit="return confirm('Delete this homework and all submissions?')">
+                        <button class="btn btn-sm btn-outline-danger">Delete</button></form>
+                </td>
+            </tr>
+            </tbody>
+        </table></div>
+    </div></div>
+
+</div>
+</body>
+</html>

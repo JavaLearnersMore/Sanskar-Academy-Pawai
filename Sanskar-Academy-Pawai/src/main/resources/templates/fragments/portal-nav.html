@@ -1,6 +1,21 @@
 <!-- Role based menu for Teacher / Student / Parent pages.
      Usage:  <div th:replace="~{fragments/portal-nav :: nav('dashboard')}"></div>  -->
 <div th:fragment="nav(active)" class="portal-nav">
+    <style>
+        /* phone fixes: wide tables scroll sideways instead of being cut off; tighter padding */
+        @media (max-width: 767.98px) {
+            table.table:not(.no-scroll) { display: block; width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; white-space: nowrap; }
+            .portal-wrap { padding-left: .6rem !important; padding-right: .6rem !important; }
+            h3 { font-size: 1.25rem; }
+            .card-body { padding: .75rem; }
+            .btn-sm { margin-bottom: 2px; }
+            .modal-dialog { margin: .5rem; }
+            ul.nav-pills, ul.nav-tabs { flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; padding-bottom: 6px; }
+            ul.nav-pills .nav-item, ul.nav-tabs .nav-item { flex: 0 0 auto; }
+            ul.nav-pills .nav-link, ul.nav-tabs .nav-link { white-space: nowrap; padding: .4rem .8rem; font-size: .9rem; }
+        }
+    </style>
+
     <div class="nav-inner">
 
         <th:block sec:authorize="hasRole('TEACHER')">
@@ -8,6 +23,16 @@
             <a th:href="@{/teacher/attendance}" th:classappend="${active == 'attendance'} ? 'active'">✅ Attendance</a>
             <a th:href="@{/teacher/exams}" th:classappend="${active == 'exams'} ? 'active'">🧠 Exams</a>
             <a th:href="@{/teacher/exams/insights}" th:classappend="${active == 'insights'} ? 'active'">📊 Student Levels</a>
+            <a th:href="@{/teacher/homework}" th:classappend="${active == 'homework'} ? 'active'">📝 Homework</a>
+            <a th:href="@{/teacher/materials}" th:classappend="${active == 'materials'} ? 'active'">📚 Material</a>
+            <a th:href="@{/teacher/doubts}" th:classappend="${active == 'doubts'} ? 'active'">❓ Doubts</a>
+            <a th:href="@{/teacher/syllabus}" th:classappend="${active == 'syllabus'} ? 'active'">📖 Syllabus</a>
+            <a th:href="@{/teacher/diary}" th:classappend="${active == 'diary'} ? 'active'">📒 Diary</a>
+            <a th:href="@{/teacher/question-bank}" th:classappend="${active == 'bank'} ? 'active'">🗃 Question Bank</a>
+            <a th:href="@{/teacher/timetable}" th:classappend="${active == 'timetable'} ? 'active'">📅 Timetable</a>
+            <a th:href="@{/teacher/my-month}" th:classappend="${active == 'mymonth'} ? 'active'">🗓 My Month</a>
+            <a th:href="@{/teacher/meetings}" th:classappend="${active == 'meetings'} ? 'active'">🤝 Meetings</a>
+            <a th:href="@{/teacher/notices}" th:classappend="${active == 'notices'} ? 'active'">📢 Notices</a>
             <a th:href="@{/teacher/leave}" th:classappend="${active == 'leave'} ? 'active'">📝 Leave</a>
             <a th:href="@{/staff/dashboard}">🗓 My Attendance &amp; Salary</a>
         </th:block>
@@ -23,6 +48,14 @@
             <a th:href="@{/student/dashboard}" th:classappend="${active == 'dashboard'} ? 'active'">🏠 Dashboard</a>
             <a th:href="@{/student/learn}" th:classappend="${active == 'learn'} ? 'active'">🤖 AI Learn</a>
             <a th:href="@{/student/exams}" th:classappend="${active == 'exams'} ? 'active'">🧠 Exams</a>
+            <a th:href="@{/student/homework}" th:classappend="${active == 'homework'} ? 'active'">📝 Homework</a>
+            <a th:href="@{/student/materials}" th:classappend="${active == 'materials'} ? 'active'">📚 Material</a>
+            <a th:href="@{/student/doubts}" th:classappend="${active == 'doubts'} ? 'active'">❓ Doubts</a>
+            <a th:href="@{/student/progress}" th:classappend="${active == 'progress'} ? 'active'">📈 My Progress</a>
+            <a th:href="@{/student/syllabus}" th:classappend="${active == 'syllabus'} ? 'active'">📖 Syllabus</a>
+            <a th:href="@{/student/diary}" th:classappend="${active == 'diary'} ? 'active'">📒 Remarks</a>
+            <a th:href="@{/student/timetable}" th:classappend="${active == 'timetable'} ? 'active'">📅 Timetable</a>
+            <a th:href="@{/student/notices}" th:classappend="${active == 'notices'} ? 'active'">📢 Notices</a>
             <a th:href="@{/student/leave}" th:classappend="${active == 'leave'} ? 'active'">📝 Leave</a>
         </th:block>
 
@@ -30,6 +63,15 @@
             <a th:href="@{/parent/dashboard}" th:classappend="${active == 'dashboard'} ? 'active'">🏠 Dashboard</a>
             <a th:href="@{/parent/fees}" th:classappend="${active == 'fees'} ? 'active'">💳 Pay Fees</a>
             <a th:href="@{/parent/results}" th:classappend="${active == 'results'} ? 'active'">🎓 Results</a>
+            <a th:href="@{/parent/progress}" th:classappend="${active == 'progress'} ? 'active'">📈 Progress</a>
+            <a th:href="@{/parent/homework}" th:classappend="${active == 'homework'} ? 'active'">📝 Homework</a>
+            <a th:href="@{/parent/materials}" th:classappend="${active == 'materials'} ? 'active'">📚 Material</a>
+            <a th:href="@{/parent/syllabus}" th:classappend="${active == 'syllabus'} ? 'active'">📖 Syllabus</a>
+            <a th:href="@{/parent/diary}" th:classappend="${active == 'diary'} ? 'active'">📒 Remarks</a>
+            <a th:href="@{/parent/timetable}" th:classappend="${active == 'timetable'} ? 'active'">📅 Timetable</a>
+            <a th:href="@{/parent/meetings}" th:classappend="${active == 'meetings'} ? 'active'">🤝 Meet Teacher</a>
+            <a th:href="@{/parent/pay-request}" th:classappend="${active == 'payreq'} ? 'active'">📲 Pay by UPI</a>
+            <a th:href="@{/parent/notices}" th:classappend="${active == 'notices'} ? 'active'">📢 Notices</a>
             <a th:href="@{/parent/leave}" th:classappend="${active == 'leave'} ? 'active'">📝 Leave</a>
         </th:block>
 

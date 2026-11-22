@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Timetable (Lectures) | Sanskar Academy</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link th:href="@{/css/portal.css}" rel="stylesheet">
+    <style>body { background-color: #f4f6f9; } .card { border-radius: 12px; }
+           tr.date-start td { border-top: 2px solid #9aa7bd; }</style>
+</head>
+<body>
+<div th:replace="~{fragments/header :: header}"></div>
+<div class="container-fluid"><div class="row">
+<div class="col-md-2 p-0"><div th:replace="~{fragments/sidebar :: sidebar}"></div></div>
+<div class="col-md-10 p-4">
+    <h3 class="mb-3">&#128218; Classes, Subjects &amp; Timetable</h3>
+    <ul class="nav nav-pills mb-3">
+        <li class="nav-item"><a class="nav-link" th:href="@{/admin/academics(tab='classes')}">Classes &amp; Students</a></li>
+        <li class="nav-item"><a class="nav-link" th:href="@{/admin/academics(tab='subjects')}">Subjects &amp; Teachers</a></li>
+        <li class="nav-item"><a class="nav-link active" th:href="@{/admin/lectures}">Timetable (Lectures)</a></li>
+        <li class="nav-item"><a class="nav-link" th:href="@{/admin/timetable}">&#128197; Monthly Timetable (previous lectures)</a></li>
+        <li class="nav-item"><a class="nav-link" th:href="@{/admin/academics(tab='parents')}">Parent Links</a></li>
+    </ul>
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+    <div class="row g-4">
+        <div class="col-lg-4">
+            <div class="card shadow-sm"><div class="card-body">
+                <h5>Add Lecture</h5>
+                <form th:action="@{/admin/lectures/add}" method="post">
+                    <div class="row">
+                        <div class="col-6 mb-3"><label class="form-label">Year</label>
+                            <select name="year" class="form-select"><option th:each="y : ${years}" th:value="${y}" th:selected="${y == year}" th:text="${y}"></option></select></div>
+                        <div class="col-6 mb-3"><label class="form-label">Month</label>
+                            <select name="month" class="form-select"><option th:each="n : ${#numbers.sequence(1,12)}" th:value="${n}" th:selected="${n == month}" th:text="${monthNames[n - 1]}"></option></select></div>
+                    </div>
+                    <input type="hidden" name="classId" th:value="${classId}" th:if="${classId != null}">
+                    <div class="mb-3"><label class="form-label">Subject (class / teacher)</label>
+                        <select name="subjectId" class="form-select" required>
+                            <option value="">Select subject</option>
+                            <option th:each="s : ${subjects}" th:value="${s.id}"
+                                    th:text="${s.subjectName + ' - ' + s.classEntity.className + ' - ' + (s.teacher != null ? s.teacher.fullName : 'no teacher')}"></option>
+                        </select></div>
+                    <div class="mb-3"><label class="form-label">Day</label>
+                        <select name="dayOfWeek" class="form-select" required><option th:each="d : ${days}" th:value="${d}" th:text="${d}"></option></select></div>
+                    <div class="row">
+                        <div class="col-6 mb-3"><label class="form-label">Start</label><input type="time" name="startTime" class="form-control" required></div>
+                        <div class="col-6 mb-3"><label class="form-label">End</label><input type="time" name="endTime" class="form-control" required></div>
+                    </div>
+                    <button class="btn btn-primary w-100">Add to Timetable</button>
+                    <div class="form-text">The lecture repeats every chosen day. Year and month decide which month you see after saving.</div>
+                </form>
+            </div></div>
+        </div>
+        <div class="col-lg-8">
+            <div class="card shadow-sm"><div class="card-body">
+                <form method="get" th:action="@{/admin/lectures}" class="row g-2 mb-3 align-items-end">
+                    <div class="col-auto"><label class="form-label small mb-0">Year</label>
+                        <select name="year" class="form-select" onchange="this.form.submit()"><option th:each="y : ${years}" th:value="${y}" th:selected="${y == year}" th:text="${y}"></option></select></div>
+                    <div class="col-auto"><label class="form-label small mb-0">Month</label>
+                        <select name="month" class="form-select" onchange="this.form.submit()"><option th:each="n : ${#numbers.sequence(1,12)}" th:value="${n}" th:selected="${n == month}" th:text="${monthNames[n - 1]}"></option></select></div>
+                    <div class="col-auto"><label class="form-label small mb-0">Class</label>
+                        <select name="classId" class="form-select" onchange="this.form.submit()"><option value="">All classes</option>
+                            <option th:each="c : ${classes}" th:value="${c.id}" th:selected="${classId != null and c.id == classId}" th:text="${c.className}"></option></select></div>
+                </form>
+                <h5 th:text="${'Weekly Timetable - ' + monthName + ' ' + year}"></h5>
+                <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead class="table-dark"><tr><th>Date</th><th>Day</th><th>Time</th><th>Subject</th><th>Class</th><th>Teacher</th><th></th></tr></thead>
+                    <tbody>
+                    <tr th:each="r, st : ${rows}" th:classappend="${st.first or r.date != rows[st.index - 1].date} ? 'date-start'">
+                        <td class="text-nowrap fw-semibold" th:text="${#temporals.format(r.date, 'dd MMM yyyy')}"></td>
+                        <td th:text="${r.slot.dayOfWeek}"></td>
+                        <td class="text-nowrap" th:text="${#temporals.format(r.slot.startTime,'HH:mm') + ' - ' + #temporals.format(r.slot.endTime,'HH:mm')}"></td>
+                        <td class="fw-semibold" th:text="${r.slot.subject.subjectName}"></td>
+                        <td th:text="${r.slot.subject.classEntity.className}"></td>
+                        <td th:text="${r.slot.subject.teacher != null ? r.slot.subject.teacher.fullName : '-'}"></td>
+                        <td class="text-nowrap">
+                            <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" th:attr="data-bs-target='#edit' + ${st.index}">Edit</button>
+                            <form th:action="@{/admin/lectures/{id}/delete(id=${r.slot.id})}" method="post" class="m-0 d-inline"
+                                  onsubmit="return confirm('This removes the lecture from the weekly pattern, so every ' + this.dataset.day + ' of every month. Continue?');" th:attr="data-day=${r.slot.dayOfWeek}">
+                                <input type="hidden" name="year" th:value="${year}"><input type="hidden" name="month" th:value="${month}">
+                                <input type="hidden" name="classId" th:value="${classId}" th:if="${classId != null}">
+                                <button class="btn btn-sm btn-outline-danger">Delete</button></form>
+                            <div class="modal fade text-start" th:id="'edit' + ${st.index}" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog"><div class="modal-content">
+                                    <form th:action="@{/admin/lectures/{id}/edit(id=${r.slot.id})}" method="post">
+                                        <input type="hidden" name="year" th:value="${year}"><input type="hidden" name="month" th:value="${month}">
+                                        <input type="hidden" name="classId" th:value="${classId}" th:if="${classId != null}">
+                                        <input type="hidden" name="room" th:value="${r.slot.room}">
+                                        <div class="modal-header"><h5 class="modal-title">Edit weekly lecture</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                                        <div class="modal-body">
+                                            <div class="alert alert-info py-2 small">This changes the weekly pattern: every <b th:text="${r.slot.dayOfWeek}"></b>. To change only one date use <b>Monthly Timetable</b>.</div>
+                                            <div class="mb-3"><label class="form-label">Subject (class / teacher)</label>
+                                                <select name="subjectId" class="form-select" required>
+                                                    <option th:each="s : ${subjects}" th:value="${s.id}" th:selected="${s.id == r.slot.subject.id}"
+                                                            th:text="${s.subjectName + ' - ' + s.classEntity.className + ' - ' + (s.teacher != null ? s.teacher.fullName : 'no teacher')}"></option></select></div>
+                                            <div class="mb-3"><label class="form-label">Day</label>
+                                                <select name="dayOfWeek" class="form-select" required><option th:each="d : ${days}" th:value="${d}" th:text="${d}" th:selected="${d == r.slot.dayOfWeek}"></option></select></div>
+                                            <div class="row">
+                                                <div class="col-6"><label class="form-label">Start</label><input type="time" name="startTime" class="form-control" th:value="${#temporals.format(r.slot.startTime,'HH:mm')}" required></div>
+                                                <div class="col-6"><label class="form-label">End</label><input type="time" name="endTime" class="form-control" th:value="${#temporals.format(r.slot.endTime,'HH:mm')}" required></div>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button class="btn btn-primary">Save changes</button></div>
+                                    </form>
+                                </div></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(rows)}"><td colspan="7" class="text-center text-muted">No lectures in this month</td></tr>
+                    </tbody>
+                </table></div>
+            </div></div>
+        </div>
+    </div>
+</div></div></div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

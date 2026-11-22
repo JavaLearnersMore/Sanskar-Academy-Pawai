@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Timetable | Sanskar Academy</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link th:href="@{/css/portal.css}" rel="stylesheet">
+    <style>
+        tr.date-start td { border-top: 2px solid #9aa7bd; }
+        .cancelled-row td { color: #8a8f98; text-decoration: line-through; }
+        .cancelled-row td.nostrike { text-decoration: none; }
+    </style>
+</head>
+<body class="portal-body">
+<div th:replace="~{fragments/header :: header}"></div>
+<div th:replace="~{fragments/portal-nav :: nav('timetable')}"></div>
+<div class="portal-wrap">
+
+    <h3 class="mb-3">&#128197; Class Timetable</h3>
+
+    <form th:if="${parent and #lists.size(children) > 1}" method="get" th:action="@{/parent/timetable}" class="mb-3">
+        <label class="form-label small mb-0">Child</label>
+        <select name="studentId" class="form-select w-auto" onchange="this.form.submit()">
+            <option th:each="k : ${children}" th:value="${k.id}" th:text="${k.fullName}" th:selected="${k.id == studentId}"></option></select>
+        <input type="hidden" name="year" th:value="${f.year}"><input type="hidden" name="month" th:value="${f.month}">
+    </form>
+
+    <div class="alert alert-warning" th:if="${noClass}">No class is assigned yet. Please ask the office.</div>
+
+    <div th:unless="${noClass}">
+        <form method="get" th:action="@{${action}}" class="row g-2 align-items-end mb-3">
+            <input type="hidden" name="studentId" th:value="${parent ? studentId : null}">
+            <div class="col-auto"><label class="form-label small mb-0">Year</label>
+                <select name="year" class="form-select" onchange="this.form.week.value=0;this.form.submit()">
+                    <option th:each="y : ${f.years}" th:value="${y}" th:text="${y}" th:selected="${y == f.year}"></option></select></div>
+            <div class="col-auto"><label class="form-label small mb-0">Month</label>
+                <select name="month" class="form-select" onchange="this.form.week.value=0;this.form.submit()">
+                    <option th:each="m, st : ${f.monthNames}" th:value="${st.count}" th:text="${m}" th:selected="${st.count == f.month}"></option></select></div>
+            <div class="col-auto"><label class="form-label small mb-0">Week</label>
+                <select name="week" class="form-select" onchange="this.form.submit()">
+                    <option value="0" th:selected="${f.week == 0}">Whole month</option>
+                    <option th:each="w : ${f.weeks}" th:value="${w.number}" th:text="${w.label}" th:selected="${w.number == f.week}"></option></select></div>
+        </form>
+        <h5 class="mb-2" th:text="${f.title}"></h5>
+
+        <div class="soft-card"><div class="card-pad">
+            <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead class="table-light"><tr><th>Date</th><th>Time</th><th>Subject</th><th>Teacher</th><th>Room</th><th>Status</th></tr></thead>
+                <tbody>
+                <tr th:each="r, st : ${rows}"
+                    th:classappend="${(st.first or r.session.lectureDate != rows[st.index - 1].session.lectureDate ? 'date-start ' : '') + (r.cancelled ? 'cancelled-row' : '')}">
+                    <td class="fw-semibold" th:text="${#temporals.format(r.session.lectureDate,'EEE, dd MMM')}"></td>
+                    <td th:text="${r.timeText}"></td>
+                    <td><b th:text="${r.subjectName}"></b>
+                        <span th:if="${r.session.extra}" class="badge bg-info text-dark">extra class</span>
+                        <div class="small text-muted" th:if="${r.session.topic != null}" th:text="'Topic: ' + ${r.session.topic}"></div></td>
+                    <td th:text="${r.teacherName}"></td>
+                    <td th:text="${r.session.room}"></td>
+                    <td class="nostrike"><span class="badge" th:classappend="${r.badgeClass}" th:text="${r.stateLabel}"></span></td>
+                </tr>
+                </tbody>
+            </table></div>
+            <div class="text-muted mt-3" th:if="${#lists.isEmpty(rows)}">The timetable for this period has not been made yet.</div>
+        </div></div>
+    </div>
+</div>
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

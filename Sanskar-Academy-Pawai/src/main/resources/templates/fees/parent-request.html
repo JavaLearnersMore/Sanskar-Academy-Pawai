@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Pay Fees (UPI) | Sanskar Academy</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link th:href="@{/css/portal.css}" rel="stylesheet">
+</head>
+<body class="portal-body">
+<div th:replace="~{fragments/header :: header}"></div>
+<div th:replace="~{fragments/portal-nav :: nav(payreq)}"></div>
+<div class="portal-wrap">
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+    <h3 class="mb-3">&#128179; Pay Fees by UPI / Bank Transfer</h3>
+    <div class="alert alert-info">
+        <b>How it works:</b> 1) Pay the school using UPI or bank transfer. 2) Enter the payment reference (UTR / transaction ID) below.
+        3) The office checks the money and approves - then your receipt appears here.
+        <div class="mt-2" th:if="${!#strings.isEmpty(upiId)}">Pay to: <b th:text="${payee}"></b> &middot; UPI ID: <b th:text="${upiId}"></b></div>
+        <div class="mt-2" th:if="${#strings.isEmpty(upiId)}">Ask the office for the school's UPI / bank details.</div>
+    </div>
+    <div class="soft-card mb-3" th:each="s : ${sums}"><div class="card-pad">
+        <div class="d-flex justify-content-between flex-wrap"><b th:text="${s.studentName}"></b>
+            <span th:text="${'Payable Rs. ' + s.payable + ' | Paid Rs. ' + s.paid + ' | Pending Rs. ' + s.pending}"></span></div>
+        <form th:if="${s.pending != null and s.pending.signum() > 0}" th:action="@{/parent/pay-request}" method="post" class="row g-2 mt-1">
+            <input type="hidden" name="studentId" th:value="${s.studentId}">
+            <div class="col-md-2"><label class="form-label small">Amount paid (Rs.)</label><input type="number" step="0.01" min="1" name="amount" class="form-control" th:value="${s.pending}" required></div>
+            <div class="col-md-2"><label class="form-label small">Paid by</label>
+                <select name="mode" class="form-select"><option value="UPI">UPI</option><option value="BANK_TRANSFER">Bank transfer</option><option value="CARD">Card</option></select></div>
+            <div class="col-md-3"><label class="form-label small">UPI ref / UTR number</label><input name="reference" class="form-control" minlength="6" maxlength="80" required></div>
+            <div class="col-md-2"><label class="form-label small">Payment date</label><input type="date" name="paidOn" class="form-control" th:value="${today}" th:max="${today}"></div>
+            <div class="col-md-3"><label class="form-label small">Note (optional)</label><input name="note" class="form-control" maxlength="250"></div>
+            <div class="col-12"><button class="btn btn-primary">Send for approval</button></div>
+        </form>
+        <div th:unless="${s.pending != null and s.pending.signum() > 0}" class="text-success mt-1">No pending fee.</div>
+    </div></div>
+    <div class="soft-card"><div class="card-pad">
+        <h5>My payment requests</h5>
+        <div th:if="${#lists.isEmpty(list)}" class="text-muted">None yet.</div>
+        <table class="table table-sm align-middle" th:unless="${#lists.isEmpty(list)}">
+            <thead><tr><th>Sent</th><th>Student</th><th>Amount</th><th>Reference</th><th>Status</th><th></th></tr></thead>
+            <tbody><tr th:each="r : ${list}">
+                <td class="text-nowrap" th:text="${#temporals.format(r.createdAt, 'dd MMM yyyy')}"></td>
+                <td th:text="${r.student.fullName}"></td><td th:text="${'Rs. ' + r.amount}"></td><td th:text="${r.reference}"></td>
+                <td><span class="badge" th:classappend="${r.status.name() == 'APPROVED'} ? 'bg-success' : (${r.status.name() == 'PENDING'} ? 'bg-warning text-dark' : 'bg-danger')" th:text="${r.status}"></span>
+                    <div class="small text-muted" th:if="${r.adminNote}" th:text="${r.adminNote}"></div></td>
+                <td><a th:if="${r.paymentId != null}" th:href="@{'/parent/fees/receipt/' + ${r.paymentId}}">Receipt</a></td>
+            </tr></tbody>
+        </table>
+    </div></div>
+
+</div>
+</body>
+</html>

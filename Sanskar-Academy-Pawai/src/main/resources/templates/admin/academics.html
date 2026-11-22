@@ -31,7 +31,8 @@
         <ul class="nav nav-pills mb-4">
             <li class="nav-item"><a class="nav-link" th:classappend="${tab=='classes'} ? 'active'" th:href="@{/admin/academics(tab='classes')}">Classes &amp; Students</a></li>
             <li class="nav-item"><a class="nav-link" th:classappend="${tab=='subjects'} ? 'active'" th:href="@{/admin/academics(tab='subjects')}">Subjects &amp; Teachers</a></li>
-            <li class="nav-item"><a class="nav-link" th:classappend="${tab=='timetable'} ? 'active'" th:href="@{/admin/academics(tab='timetable')}">Timetable (Lectures)</a></li>
+            <li class="nav-item"><a class="nav-link" th:href="@{/admin/lectures}">Timetable (Lectures)</a></li>
+            <li class="nav-item"><a class="nav-link" th:href="@{/admin/timetable}">📅 Monthly Timetable (previous lectures)</a></li>
             <li class="nav-item"><a class="nav-link" th:classappend="${tab=='parents'} ? 'active'" th:href="@{/admin/academics(tab='parents')}">Parent Links</a></li>
         </ul>
 

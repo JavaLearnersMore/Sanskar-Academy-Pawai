@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Student Doubts | Sanskar Academy</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link th:href="@{/css/portal.css}" rel="stylesheet">
+</head>
+<body class="portal-body">
+<div th:replace="~{fragments/header :: header}"></div>
+<div th:replace="~{fragments/portal-nav :: nav(doubts)}"></div>
+<div class="portal-wrap">
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+    <h3 class="mb-1">&#10067; Student Doubts</h3>
+    <p class="text-muted" th:text="${open + ' doubt(s) waiting for an answer'}"></p>
+    <div th:if="${#lists.isEmpty(list)}" class="soft-card"><div class="card-pad text-muted">No doubts yet.</div></div>
+    <div class="soft-card mb-3" th:each="d : ${list}"><div class="card-pad">
+        <div class="d-flex justify-content-between flex-wrap">
+            <b th:text="${d.student.fullName + ' - ' + d.subject.subjectName}"></b>
+            <span class="text-muted small" th:text="${#temporals.format(d.askedAt, 'dd MMM yyyy, HH:mm')}"></span>
+        </div>
+        <p class="mt-2 mb-2" style="white-space:pre-wrap" th:text="${d.question}"></p>
+        <div th:if="${d.answer}" class="alert alert-success mb-0">
+            <div class="small text-muted" th:text="${'Answered by ' + d.answeredBy.fullName + (d.aiAssisted ? ' (AI draft, checked by teacher)' : '')}"></div>
+            <div style="white-space:pre-wrap" th:text="${d.answer}"></div>
+        </div>
+        <div th:unless="${d.answer}">
+            <form th:action="@{'/teacher/doubts/' + ${d.id} + '/answer'}" method="post">
+                <textarea name="answer" class="form-control mb-2" rows="3" maxlength="3000" placeholder="Write the answer"
+                          th:text="${draftId != null and draftId == d.id} ? ${draftText} : ''"></textarea>
+                <input type="hidden" name="ai" th:value="${draftId != null and draftId == d.id}">
+                <button class="btn btn-success btn-sm">Send answer</button>
+            </form>
+            <form th:action="@{'/teacher/doubts/' + ${d.id} + '/draft'}" method="post" class="d-inline">
+                <button class="btn btn-outline-secondary btn-sm mt-2">&#129302; Get AI draft (you can edit it before sending)</button>
+            </form>
+        </div>
+    </div></div>
+
+</div>
+</body>
+</html>

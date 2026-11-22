@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Parent Meetings | Sanskar Academy</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link th:href="@{/css/portal.css}" rel="stylesheet">
+</head>
+<body class="portal-body">
+<div th:replace="~{fragments/header :: header}"></div>
+<div th:replace="~{fragments/portal-nav :: nav('meetings')}"></div>
+<div class="portal-wrap">
+    <h3 class="mb-3">&#129309; Parent Meetings</h3>
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+    <div class="soft-card mb-3"><div class="card-pad">
+        <h5>Open meeting slots</h5>
+        <form th:action="@{/teacher/meetings}" method="post" class="row g-2 align-items-end">
+            <div class="col-md-3"><label class="form-label small">Date</label><input type="date" name="date" class="form-control" required></div>
+            <div class="col-md-2"><label class="form-label small">First slot starts</label><input type="time" name="start" class="form-control" required></div>
+            <div class="col-md-2"><label class="form-label small">How many slots</label><input type="number" name="count" min="1" max="12" value="4" class="form-control"></div>
+            <div class="col-md-2"><label class="form-label small">Minutes each</label><input type="number" name="minutes" min="5" max="120" value="15" class="form-control"></div>
+            <div class="col-md-3"><label class="form-label small">Where</label><input name="mode" class="form-control" value="In school" maxlength="60"></div>
+            <div class="col-12"><button class="btn btn-primary">Open slots</button></div>
+        </form>
+    </div></div>
+    <div class="soft-card"><div class="card-pad">
+        <h5>My slots</h5>
+        <div th:if="${#lists.isEmpty(list)}" class="text-muted">No slots yet.</div>
+        <div class="table-responsive" th:unless="${#lists.isEmpty(list)}">
+        <table class="table table-sm align-middle">
+            <thead><tr><th>When</th><th>Where</th><th>Status</th><th>Parent / student</th><th></th></tr></thead>
+            <tbody><tr th:each="s : ${list}">
+                <td class="text-nowrap" th:text="${#temporals.format(s.startAt, 'EEE dd MMM, hh:mm a') + ' - ' + #temporals.format(s.endAt, 'hh:mm a')}"></td>
+                <td th:text="${s.mode}"></td>
+                <td><span class="badge" th:classappend="${s.status.name() == 'OPEN'} ? 'bg-light text-dark border' : (${s.status.name() == 'BOOKED'} ? 'bg-warning text-dark' : (${s.status.name() == 'CONFIRMED'} ? 'bg-success' : (${s.status.name() == 'DONE'} ? 'bg-secondary' : 'bg-danger')))" th:text="${s.status}"></span></td>
+                <td><span th:if="${s.parent != null}" th:text="${s.parent.fullName + ' (' + (s.student != null ? s.student.fullName : '-') + ')'}"></span>
+                    <div class="small text-muted" th:if="${s.purpose}" th:text="${s.purpose}"></div>
+                    <div class="small text-muted" th:if="${s.teacherNote}" th:text="${'Note: ' + s.teacherNote}"></div></td>
+                <td class="text-end text-nowrap">
+                    <form class="d-inline" th:if="${s.status.name() == 'BOOKED'}" th:action="@{'/teacher/meetings/' + ${s.id} + '/confirm'}" method="post"><button class="btn btn-sm btn-success">Confirm</button></form>
+                    <form class="d-inline" th:if="${s.status.name() == 'CONFIRMED' or s.status.name() == 'BOOKED'}" th:action="@{'/teacher/meetings/' + ${s.id} + '/done'}" method="post">
+                        <input name="note" class="form-control form-control-sm d-inline-block" style="width:140px" placeholder="Note (optional)"><button class="btn btn-sm btn-outline-secondary">Done</button></form>
+                    <form class="d-inline" th:if="${s.status.name() != 'DONE' and s.status.name() != 'CANCELLED'}" th:action="@{'/teacher/meetings/' + ${s.id} + '/cancel'}" method="post" onsubmit="return confirm('Cancel / remove this slot?')">
+                        <button class="btn btn-sm btn-outline-danger" th:text="${s.status.name() == 'OPEN'} ? 'Remove' : 'Cancel'"></button></form>
+                </td>
+            </tr></tbody>
+        </table></div>
+    </div></div>
+</div>
+</body>
+</html>

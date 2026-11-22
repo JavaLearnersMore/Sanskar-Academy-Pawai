@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Who took what | Sanskar Academy</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link th:href="@{/css/portal.css}" rel="stylesheet">
+    <style>body { background-color: #f4f6f9; } .card { border-radius: 12px; }</style>
+</head>
+<body>
+<div th:replace="~{fragments/header :: header}"></div>
+<div class="container-fluid"><div class="row">
+<div class="col-md-2 p-0"><div th:replace="~{fragments/sidebar :: sidebar}"></div></div>
+<div class="col-md-10 p-4">
+
+    <h3 class="mb-3">&#128202; Who took what</h3>
+    <div th:replace="~{fragments/timetable-parts :: adminTabs('report')}"></div>
+
+    <div th:replace="~{fragments/timetable-parts :: filter(${f}, '/admin/timetable/report', true)}"></div>
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h5 class="mb-0" th:text="${f.title}"></h5>
+        <a class="btn btn-sm btn-outline-success"
+           th:href="@{/admin/timetable/export.csv(year=${f.year},month=${f.month},week=${f.week},classId=${f.classId},teacherId=${f.teacherId})}">&#11015; Download Excel (CSV)</a>
+    </div>
+    <div th:replace="~{fragments/timetable-parts :: counts(${counts})}"></div>
+
+    <div class="card shadow-sm mb-4"><div class="card-body">
+        <h6>Teacher-wise summary</h6>
+        <div class="small text-muted mb-2">"Taken %" counts only lectures whose date has passed. A lecture counts as taken when the teacher marked it or when attendance was marked for that subject on that day.</div>
+        <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-dark"><tr><th>Teacher</th><th>Class</th><th>Subject</th><th class="text-center">Planned</th><th class="text-center">Taken</th><th class="text-center">Not taken</th><th class="text-center">Cancelled</th><th class="text-center">Upcoming</th><th class="text-center">Took as substitute</th><th style="min-width:150px">Taken %</th></tr></thead>
+            <tbody>
+            <tr th:each="l : ${lines}">
+                <td class="fw-semibold" th:text="${l.teacher}"></td><td th:text="${l.className}"></td><td th:text="${l.subject}"></td>
+                <td class="text-center" th:text="${l.planned}"></td>
+                <td class="text-center text-success fw-bold" th:text="${l.taken}"></td>
+                <td class="text-center text-danger fw-bold" th:text="${l.notTaken}"></td>
+                <td class="text-center" th:text="${l.cancelled}"></td>
+                <td class="text-center" th:text="${l.upcoming}"></td>
+                <td class="text-center" th:text="${l.substituteWork}"></td>
+                <td><div class="progress" style="height:10px"><div class="progress-bar bg-success" th:style="'width:' + ${l.percent} + '%'"></div></div>
+                    <small th:text="${l.percent} + '%'"></small></td>
+            </tr>
+            </tbody>
+        </table></div>
+        <div class="text-muted mt-2" th:if="${#lists.isEmpty(lines)}">No lectures for this selection. Generate the month first on the Monthly plan page.</div>
+    </div></div>
+
+    <div class="card shadow-sm"><div class="card-body">
+        <h6>Date-by-date list</h6>
+        <div class="table-responsive">
+        <table class="table table-sm align-middle mb-0">
+            <thead class="table-light"><tr><th>Date</th><th>Time</th><th>Class</th><th>Subject</th><th>Teacher</th><th>Topic</th><th>Status</th></tr></thead>
+            <tbody>
+            <tr th:each="r : ${rows}">
+                <td th:text="${#temporals.format(r.session.lectureDate,'EEE, dd MMM yyyy')}"></td>
+                <td th:text="${r.timeText}"></td><td th:text="${r.className}"></td><td th:text="${r.subjectName}"></td>
+                <td><span th:text="${r.teacherName}"></span><span class="small text-warning" th:if="${r.substituted}" th:text="' (instead of ' + ${r.plannedTeacherName} + ')'"></span></td>
+                <td th:text="${r.session.topic}"></td>
+                <td><span class="badge" th:classappend="${r.badgeClass}" th:text="${r.stateLabel}"></span></td>
+            </tr>
+            </tbody>
+        </table></div>
+    </div></div>
+</div></div></div>
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

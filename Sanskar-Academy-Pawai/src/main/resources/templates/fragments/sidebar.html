@@ -2,26 +2,82 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
 
+<!-- Admin left menu. On a phone it becomes a small "Menu" drop-down (no JavaScript needed). -->
 <div th:fragment="sidebar">
-    <div class="bg-dark text-white vh-100 p-3">
+    <style>
+        /* phone fixes: wide tables scroll sideways instead of being cut off; tighter padding */
+        @media (max-width: 767.98px) {
+            table.table:not(.no-scroll) { display: block; width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; white-space: nowrap; }
+            .col-md-10.p-4 { padding: .75rem !important; }
+            h3 { font-size: 1.25rem; }
+            .card-body { padding: .75rem; }
+            .btn-sm { margin-bottom: 2px; }
+            .modal-dialog { margin: .5rem; }
+            ul.nav-pills, ul.nav-tabs { flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; padding-bottom: 6px; }
+            ul.nav-pills .nav-item, ul.nav-tabs .nav-item { flex: 0 0 auto; }
+            ul.nav-pills .nav-link, ul.nav-tabs .nav-link { white-space: nowrap; padding: .4rem .8rem; font-size: .9rem; }
+        }
+    </style>
+    <style>
+        .sb-wrap { background: #212529; color: #fff; }
+        @media (min-width: 768px) { .sb-wrap { min-height: 100vh; } }
+        .sb-wrap summary { cursor: pointer; font-weight: 600; list-style: none; }
+        .sb-wrap summary::-webkit-details-marker { display: none; }
+    </style>
+    <div class="sb-wrap p-3">
+        <h5 class="fw-bold text-start mb-3 ms-2 d-none d-md-block">Admin Panel</h5>
 
-        <h5 class="fw-bold text-start mb-4 ms-2">Admin Panel</h5>
+        <details class="d-md-none">
+            <summary class="py-1 ms-1">&#9776; Admin Menu <span class="small text-white-50">(tap to open)</span></summary>
+            <div class="mt-2" th:replace="~{fragments/sidebar :: links}"></div>
+        </details>
 
-        <ul class="nav flex-column">
+        <div class="d-none d-md-block" th:replace="~{fragments/sidebar :: linksDesktop}"></div>
+    </div>
+</div>
+
+<div th:fragment="links">
+    <ul class="nav flex-column">
             <li class="nav-item mb-2"><a class="nav-link text-white" th:href="@{/admin/dashboard}">📊 Dashboard</a></li>
+            <li class="nav-item mb-2"><a class="nav-link text-white" th:href="@{/admin/owner}">👑 Owner Dashboard</a></li>
             <li class="nav-item mb-2"><a class="nav-link text-white" th:href="@{/admin/students}">👨‍🎓 Students</a></li>
             <li class="nav-item mb-2"><a class="nav-link text-white" th:href="@{/admin/teachers}">👨‍🏫 Teachers</a></li>
             <li class="nav-item mb-2"><a class="nav-link text-white" th:href="@{/admin/academics}">📚 Classes &amp; Timetable</a></li>
+            <li class="nav-item mb-2"><a class="nav-link text-white" th:href="@{/admin/timetable}">📅 Monthly Timetable</a></li>
             <li class="nav-item mb-2"><a class="nav-link text-white" th:href="@{/admin/fees}">🧾 Student Fees</a></li>
+            <li class="nav-item mb-2"><a class="nav-link text-white" th:href="@{/admin/fee-requests}">✅ Fee Payment Requests</a></li>
             <li class="nav-item mb-2"><a class="nav-link text-white" th:href="@{/admin/staff}">🧑‍💼 Staff &amp; HR</a></li>
             <li class="nav-item mb-2"><a class="nav-link text-white" th:href="@{/admin/salaries}">💼 Teacher Salary</a></li>
             <li class="nav-item mb-2"><a class="nav-link text-white" th:href="@{/admin/leaves}">📝 Leave Requests</a></li>
             <li class="nav-item mb-2"><a class="nav-link text-white" th:href="@{/admin/finance}">💰 Finance</a></li>
             <li class="nav-item mb-2"><a class="nav-link text-white" th:href="@{/admin/expenses}">💸 Expenses</a></li>
+            <li class="nav-item mb-2"><a class="nav-link text-white" th:href="@{/admin/notices}">📢 Notice Board</a></li>
+            <li class="nav-item mb-2"><a class="nav-link text-white" th:href="@{/admin/enquiries}">📞 Admission Enquiries</a></li>
+            <li class="nav-item mb-2"><a class="nav-link text-white" th:href="@{/admin/audit-log}">📜 Audit Log</a></li>
             <li class="nav-item mb-2"><a class="nav-link text-white" th:href="@{/admin/settings}">⚙ Settings</a></li>
         </ul>
-    </div>
 </div>
 
+<div th:fragment="linksDesktop" class="d-none d-md-block">
+    <ul class="nav flex-column">
+            <li class="nav-item mb-2"><a class="nav-link text-white" th:href="@{/admin/dashboard}">📊 Dashboard</a></li>
+            <li class="nav-item mb-2"><a class="nav-link text-white" th:href="@{/admin/owner}">👑 Owner Dashboard</a></li>
+            <li class="nav-item mb-2"><a class="nav-link text-white" th:href="@{/admin/students}">👨‍🎓 Students</a></li>
+            <li class="nav-item mb-2"><a class="nav-link text-white" th:href="@{/admin/teachers}">👨‍🏫 Teachers</a></li>
+            <li class="nav-item mb-2"><a class="nav-link text-white" th:href="@{/admin/academics}">📚 Classes &amp; Timetable</a></li>
+            <li class="nav-item mb-2"><a class="nav-link text-white" th:href="@{/admin/timetable}">📅 Monthly Timetable</a></li>
+            <li class="nav-item mb-2"><a class="nav-link text-white" th:href="@{/admin/fees}">🧾 Student Fees</a></li>
+            <li class="nav-item mb-2"><a class="nav-link text-white" th:href="@{/admin/fee-requests}">✅ Fee Payment Requests</a></li>
+            <li class="nav-item mb-2"><a class="nav-link text-white" th:href="@{/admin/staff}">🧑‍💼 Staff &amp; HR</a></li>
+            <li class="nav-item mb-2"><a class="nav-link text-white" th:href="@{/admin/salaries}">💼 Teacher Salary</a></li>
+            <li class="nav-item mb-2"><a class="nav-link text-white" th:href="@{/admin/leaves}">📝 Leave Requests</a></li>
+            <li class="nav-item mb-2"><a class="nav-link text-white" th:href="@{/admin/finance}">💰 Finance</a></li>
+            <li class="nav-item mb-2"><a class="nav-link text-white" th:href="@{/admin/expenses}">💸 Expenses</a></li>
+            <li class="nav-item mb-2"><a class="nav-link text-white" th:href="@{/admin/notices}">📢 Notice Board</a></li>
+            <li class="nav-item mb-2"><a class="nav-link text-white" th:href="@{/admin/enquiries}">📞 Admission Enquiries</a></li>
+            <li class="nav-item mb-2"><a class="nav-link text-white" th:href="@{/admin/audit-log}">📜 Audit Log</a></li>
+            <li class="nav-item mb-2"><a class="nav-link text-white" th:href="@{/admin/settings}">⚙ Settings</a></li>
+        </ul>
+</div>
 </body>
 </html>

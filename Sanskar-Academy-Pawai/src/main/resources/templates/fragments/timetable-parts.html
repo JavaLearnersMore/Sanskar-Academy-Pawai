@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!-- year / month / week selector. admin=true also shows class and teacher -->
+<form th:fragment="filter(f, action, admin)" method="get" th:action="@{${action}}" class="row g-2 align-items-end mb-3">
+    <div class="col-auto"><label class="form-label small mb-0">Year</label>
+        <select name="year" class="form-select" onchange="this.form.week.value=0;this.form.submit()">
+            <option th:each="y : ${f.years}" th:value="${y}" th:text="${y}" th:selected="${y == f.year}"></option></select></div>
+    <div class="col-auto"><label class="form-label small mb-0">Month</label>
+        <select name="month" class="form-select" onchange="this.form.week.value=0;this.form.submit()">
+            <option th:each="m, st : ${f.monthNames}" th:value="${st.count}" th:text="${m}" th:selected="${st.count == f.month}"></option></select></div>
+    <div class="col-auto"><label class="form-label small mb-0">Week</label>
+        <select name="week" class="form-select" onchange="this.form.submit()">
+            <option value="0" th:selected="${f.week == 0}">Whole month</option>
+            <option th:each="w : ${f.weeks}" th:value="${w.number}" th:text="${w.label}" th:selected="${w.number == f.week}"></option></select></div>
+    <div class="col-auto" th:if="${admin}"><label class="form-label small mb-0">Class</label>
+        <select name="classId" class="form-select" onchange="this.form.submit()">
+            <option value="">All classes</option>
+            <option th:each="c : ${classes}" th:value="${c.id}" th:text="${c.className}" th:selected="${c.id == f.classId}"></option></select></div>
+    <div class="col-auto" th:if="${admin}"><label class="form-label small mb-0">Teacher</label>
+        <select name="teacherId" class="form-select" onchange="this.form.submit()">
+            <option value="">All teachers</option>
+            <option th:each="t : ${teachers}" th:value="${t.id}" th:text="${t.fullName}" th:selected="${t.id == f.teacherId}"></option></select></div>
+    <div class="col-auto"><noscript><button class="btn btn-primary">Show</button></noscript></div>
+</form>
+
+<!-- keeps the chosen year / month / week / class / teacher after a button is pressed -->
+<th:block th:fragment="hidden(f)">
+    <input type="hidden" name="year" th:value="${f.year}">
+    <input type="hidden" name="month" th:value="${f.month}">
+    <input type="hidden" name="week" th:value="${f.week}">
+    <input type="hidden" name="classId" th:value="${f.classId}">
+    <input type="hidden" name="teacherId" th:value="${f.teacherId}">
+</th:block>
+
+<!-- sub menu of the admin timetable pages -->
+<ul th:fragment="adminTabs(active)" class="nav nav-pills mb-3">
+    <li class="nav-item"><a class="nav-link" th:classappend="${active == 'plan'} ? 'active'" th:href="@{/admin/timetable}">&#128197; Monthly plan</a></li>
+    <li class="nav-item"><a class="nav-link" th:classappend="${active == 'report'} ? 'active'" th:href="@{/admin/timetable/report}">&#128202; Who took what</a></li>
+    <li class="nav-item"><a class="nav-link" th:href="@{/admin/academics(tab='timetable')}">&#128257; Weekly pattern</a></li>
+</ul>
+
+<!-- the four numbers on top -->
+<div th:fragment="counts(c)" class="row g-2 mb-3 text-center">
+    <div class="col-6 col-md-3"><div class="border rounded bg-white p-2"><div class="small text-muted">Planned / upcoming</div><div class="fs-4 fw-bold text-primary" th:text="${c.planned}"></div></div></div>
+    <div class="col-6 col-md-3"><div class="border rounded bg-white p-2"><div class="small text-muted">Taken</div><div class="fs-4 fw-bold text-success" th:text="${c.taken}"></div></div></div>
+    <div class="col-6 col-md-3"><div class="border rounded bg-white p-2"><div class="small text-muted">Not taken</div><div class="fs-4 fw-bold text-danger" th:text="${c.notTaken}"></div></div></div>
+    <div class="col-6 col-md-3"><div class="border rounded bg-white p-2"><div class="small text-muted">Cancelled</div><div class="fs-4 fw-bold text-secondary" th:text="${c.cancelled}"></div></div></div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>My Timetable | Sanskar Academy</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link th:href="@{/css/portal.css}" rel="stylesheet">
+    <style>
+        tr.date-start td { border-top: 2px solid #9aa7bd; }
+        .cancelled-row td { color: #8a8f98; text-decoration: line-through; }
+        .cancelled-row td.nostrike { text-decoration: none; }
+    </style>
+</head>
+<body class="portal-body">
+<div th:replace="~{fragments/header :: header}"></div>
+<div th:replace="~{fragments/portal-nav :: nav('timetable')}"></div>
+<div class="portal-wrap">
+
+    <h3 class="mb-3">&#128197; My Timetable</h3>
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+    <div th:replace="~{fragments/timetable-parts :: filter(${f}, '/teacher/timetable', false)}"></div>
+    <h5 class="mb-2" th:text="${f.title}"></h5>
+    <div th:replace="~{fragments/timetable-parts :: counts(${counts})}"></div>
+
+    <div class="soft-card"><div class="card-pad">
+        <div class="alert alert-info py-2 small">Press <b>Taken</b> after you teach a lecture and write the topic. If you mark attendance for a subject on a day, that lecture counts as taken automatically.</div>
+        <div class="table-responsive">
+        <table class="table table-sm align-middle mb-0">
+            <thead class="table-light"><tr><th>Date</th><th>Time</th><th>Class</th><th>Subject</th><th>Room</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+            <tr th:each="r, st : ${rows}"
+                th:classappend="${(st.first or r.session.lectureDate != rows[st.index - 1].session.lectureDate ? 'date-start ' : '') + (r.cancelled ? 'cancelled-row' : '')}">
+                <td class="fw-semibold" th:text="${#temporals.format(r.session.lectureDate,'EEE, dd MMM')}"></td>
+                <td th:text="${r.timeText}"></td>
+                <td th:text="${r.className}"></td>
+                <td><b th:text="${r.subjectName}"></b>
+                    <span th:if="${r.session.extra}" class="badge bg-info text-dark">extra</span>
+                    <div class="small text-warning" th:if="${r.substituted}" th:text="'Taken by ' + ${r.teacherName} + ' (planned: ' + ${r.plannedTeacherName} + ')'"></div>
+                    <div class="small text-muted" th:if="${r.session.topic != null}" th:text="'Topic: ' + ${r.session.topic}"></div>
+                    <div class="small text-muted" th:if="${r.session.note != null}" th:text="${r.session.note}"></div></td>
+                <td th:text="${r.session.room}"></td>
+                <td class="nostrike"><span class="badge" th:classappend="${r.badgeClass}" th:text="${r.stateLabel}"></span></td>
+                <td class="nostrike text-end">
+                    <button type="button" class="btn btn-sm btn-success js-taken"
+                            th:if="${r.markableBy(meId)}"
+                            th:attr="data-id=${r.id},data-topic=${r.session.topic}">Taken</button>
+                    <form class="d-inline" th:if="${r.markedTaken}" th:action="@{/teacher/timetable/{id}/taken(id=${r.id})}" method="post">
+                        <input type="hidden" name="year" th:value="${f.year}"><input type="hidden" name="month" th:value="${f.month}"><input type="hidden" name="week" th:value="${f.week}">
+                        <input type="hidden" name="undo" value="true">
+                        <button class="btn btn-sm btn-outline-warning">Undo</button></form>
+                </td>
+            </tr>
+            </tbody>
+        </table></div>
+        <div class="text-muted mt-3" th:if="${#lists.isEmpty(rows)}">No lectures for you in this period. The admin makes the month timetable.</div>
+    </div></div>
+</div>
+
+<div class="modal fade" id="takenModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+    <form id="takenForm" method="post" th:action="@{/teacher/timetable}">
+        <input type="hidden" name="year" th:value="${f.year}"><input type="hidden" name="month" th:value="${f.month}"><input type="hidden" name="week" th:value="${f.week}">
+        <div class="modal-header"><h5 class="modal-title">Mark lecture as taken</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+            <label class="form-label small mb-0">Topic taught</label><input name="topic" maxlength="250" class="form-control mb-2" placeholder="e.g. Rational numbers - properties">
+            <label class="form-label small mb-0">Note (optional)</label><input name="note" maxlength="250" class="form-control">
+        </div>
+        <div class="modal-footer"><button class="btn btn-success">Mark taken</button></div>
+    </form></div></div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script th:inline="javascript">
+var BASE = /*[[@{/teacher/timetable/}]]*/ '/teacher/timetable/';
+document.querySelectorAll('.js-taken').forEach(function(b){ b.addEventListener('click', function(){
+  var f = document.getElementById('takenForm'); f.action = BASE + b.dataset.id + '/taken'; f.topic.value = b.dataset.topic || '';
+  new bootstrap.Modal(document.getElementById('takenModal')).show(); }); });
+</script>
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Admission Enquiries | Sanskar Academy</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link th:href="@{/css/portal.css}" rel="stylesheet">
+    <style>body { background-color: #f4f6f9; } .card { border-radius: 12px; } .stat { font-size: 1.9rem; font-weight: 600; line-height: 1.1; }</style>
+</head>
+<body>
+<div th:replace="~{fragments/header :: header}"></div>
+<div class="container-fluid"><div class="row">
+<div class="col-md-2 p-0"><div th:replace="~{fragments/sidebar :: sidebar}"></div></div>
+<div class="col-md-10 p-4">
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+    <h3 class="mb-3">&#128222; Admission Enquiries</h3>
+    <div class="alert alert-warning" th:if="${!#lists.isEmpty(due)}">
+        <b th:text="${#lists.size(due) + ' follow-up call(s) are due today or overdue:'}"></b>
+        <span th:each="e, st : ${due}" th:text="${e.studentName + ' (' + e.phone + ')' + (st.last ? '' : ', ')}"></span>
+    </div>
+    <div class="card mb-3"><div class="card-body">
+        <h5>New enquiry (walk-in / phone)</h5>
+        <form th:action="@{/admin/enquiries}" method="post" class="row g-2">
+            <div class="col-md-3"><input name="studentName" class="form-control" placeholder="Student name *" maxlength="120" required></div>
+            <div class="col-md-3"><input name="parentName" class="form-control" placeholder="Parent name" maxlength="120"></div>
+            <div class="col-md-2"><input name="phone" class="form-control" placeholder="Mobile *" maxlength="20" required></div>
+            <div class="col-md-2"><input name="email" class="form-control" placeholder="Email" maxlength="120"></div>
+            <div class="col-md-2"><input name="interestedClass" class="form-control" placeholder="Class" maxlength="60"></div>
+            <div class="col-md-3"><input name="source" class="form-control" placeholder="How did they hear? (Walk-in, Friend...)" maxlength="60"></div>
+            <div class="col-md-7"><input name="message" class="form-control" placeholder="Notes" maxlength="500"></div>
+            <div class="col-md-2"><button class="btn btn-primary w-100">Save</button></div>
+        </form>
+        <div class="small text-muted mt-2">Public form for your website / WhatsApp link: <code>/enquiry</code> (see README to switch it on).</div>
+    </div></div>
+    <div class="card"><div class="card-body">
+        <form method="get" th:action="@{/admin/enquiries}" class="d-flex gap-2 mb-2">
+            <select name="status" class="form-select" style="width:200px" onchange="this.form.submit()">
+                <option value="">All enquiries</option>
+                <option th:each="s : ${statuses}" th:value="${s}" th:selected="${s.name() == status}" th:text="${s}"></option></select>
+        </form>
+        <div th:if="${#lists.isEmpty(list)}" class="text-muted">No enquiries.</div>
+        <div class="table-responsive" th:unless="${#lists.isEmpty(list)}">
+        <table class="table align-middle">
+            <thead><tr><th>Student / Parent</th><th>Contact</th><th>Class</th><th>Status</th><th>Follow-up</th><th style="min-width:320px">Update</th></tr></thead>
+            <tbody><tr th:each="e : ${list}">
+                <td><b th:text="${e.studentName}"></b><div class="small text-muted" th:text="${e.parentName}"></div>
+                    <div class="small text-muted" th:text="${#temporals.format(e.createdAt, 'dd MMM yyyy') + ' - ' + e.source}"></div></td>
+                <td><a th:href="${'tel:' + e.phone}" th:text="${e.phone}"></a><div class="small" th:text="${e.email}"></div></td>
+                <td th:text="${e.interestedClass}"></td>
+                <td><span class="badge" th:classappend="${e.status.name() == 'ADMITTED'} ? 'bg-success' : (${e.status.name() == 'LOST'} ? 'bg-secondary' : 'bg-primary')" th:text="${e.status}"></span></td>
+                <td><span th:text="${e.nextFollowUp}"></span> <span class="badge bg-danger" th:if="${e.nextFollowUp != null and e.nextFollowUp.isBefore(today)}">overdue</span></td>
+                <td>
+                    <div class="small text-muted mb-1" th:if="${e.message}" th:text="${e.message}"></div>
+                    <div class="small mb-1" style="white-space:pre-wrap" th:if="${e.notes}" th:text="${e.notes}"></div>
+                    <form th:action="@{'/admin/enquiries/' + ${e.id} + '/update'}" method="post" class="d-flex gap-1 flex-wrap">
+                        <select name="status" class="form-select form-select-sm" style="width:120px"><option th:each="s : ${statuses}" th:value="${s}" th:selected="${s == e.status}" th:text="${s}"></option></select>
+                        <input type="date" name="nextFollowUp" class="form-control form-control-sm" style="width:140px" th:value="${e.nextFollowUp}">
+                        <input name="note" class="form-control form-control-sm" style="width:150px" placeholder="Call note" maxlength="200">
+                        <button class="btn btn-sm btn-success">Save</button>
+                    </form>
+                    <form th:action="@{'/admin/enquiries/' + ${e.id} + '/delete'}" method="post" class="mt-1" onsubmit="return confirm('Delete this enquiry?')"><button class="btn btn-sm btn-link text-danger p-0">Delete</button></form>
+                </td>
+            </tr></tbody>
+        </table></div>
+    </div></div>
+
+</div></div></div>
+</body>
+</html>

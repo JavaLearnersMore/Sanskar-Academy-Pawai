@@ -1,0 +1,8 @@
+<div th:fragment="picker(base, path)" th:if="${parentView}">
+    <div th:if="${#lists.isEmpty(children)}" class="alert alert-info">No child is linked to your account yet. Please ask the office.</div>
+    <form th:unless="${#lists.isEmpty(children)}" method="get" th:action="@{${path}}" class="row g-2 mb-3">
+        <div class="col-md-5"><select name="child" class="form-select" onchange="this.form.submit()">
+            <option th:each="k : ${children}" th:value="${k.id}" th:selected="${child != null and k.id == child.id}" th:text="${k.fullName}"></option>
+        </select></div>
+    </form>
+</div>

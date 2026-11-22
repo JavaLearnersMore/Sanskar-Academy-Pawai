@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Fee Payment Requests | Sanskar Academy</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link th:href="@{/css/portal.css}" rel="stylesheet">
+    <style>body { background-color: #f4f6f9; } .card { border-radius: 12px; }</style>
+</head>
+<body>
+<div th:replace="~{fragments/header :: header}"></div>
+<div class="container-fluid"><div class="row">
+<div class="col-md-2 p-0"><div th:replace="~{fragments/sidebar :: sidebar}"></div></div>
+<div class="col-md-10 p-4">
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+    <h3 class="mb-3">&#9989; Fee Payment Requests</h3>
+    <div class="alert alert-warning small">Approve a request only after you see the money in the bank / UPI statement with the same reference number.</div>
+    <div class="card mb-3"><div class="card-body">
+        <h5 th:text="${'Waiting for approval (' + #lists.size(pending) + ')'}"></h5>
+        <div th:if="${#lists.isEmpty(pending)}" class="text-muted">Nothing waiting.</div>
+        <div class="table-responsive" th:unless="${#lists.isEmpty(pending)}">
+        <table class="table align-middle">
+            <thead><tr><th>Sent</th><th>Student / Parent</th><th>Amount</th><th>Mode</th><th>Reference</th><th>Paid on</th><th style="min-width:300px">Decision</th></tr></thead>
+            <tbody><tr th:each="r : ${pending}">
+                <td class="text-nowrap" th:text="${#temporals.format(r.createdAt, 'dd MMM, HH:mm')}"></td>
+                <td><b th:text="${r.student.fullName}"></b><div class="small text-muted" th:text="${r.parent.fullName + ' | ' + r.parent.mobileNumber}"></div>
+                    <div class="small" th:if="${r.note}" th:text="${r.note}"></div></td>
+                <td th:text="${'Rs. ' + r.amount}"></td><td th:text="${r.mode}"></td><td><code th:text="${r.reference}"></code></td><td th:text="${r.paidOn}"></td>
+                <td>
+                    <form th:action="@{'/admin/fee-requests/' + ${r.id} + '/approve'}" method="post" class="d-inline"
+                          onsubmit="return confirm('Approve and record this payment?')"><button class="btn btn-sm btn-success">Approve</button></form>
+                    <form th:action="@{'/admin/fee-requests/' + ${r.id} + '/reject'}" method="post" class="d-inline-flex gap-1">
+                        <input name="note" class="form-control form-control-sm" style="width:150px" placeholder="Reason" required>
+                        <button class="btn btn-sm btn-outline-danger">Reject</button></form>
+                </td>
+            </tr></tbody>
+        </table></div>
+    </div></div>
+    <div class="card"><div class="card-body">
+        <h5>Recent decisions</h5>
+        <table class="table table-sm mb-0">
+            <tbody><tr th:each="r : ${recent}" th:if="${r.status.name() != 'PENDING'}">
+                <td class="text-nowrap" th:text="${#temporals.format(r.createdAt, 'dd MMM yyyy')}"></td>
+                <td th:text="${r.student.fullName}"></td><td th:text="${'Rs. ' + r.amount}"></td><td><code th:text="${r.reference}"></code></td>
+                <td><span class="badge" th:classappend="${r.status.name() == 'APPROVED'} ? 'bg-success' : 'bg-danger'" th:text="${r.status}"></span></td>
+                <td class="small text-muted" th:text="${(r.decidedBy != null ? r.decidedBy.fullName : '') + (r.adminNote != null ? ' - ' + r.adminNote : '')}"></td>
+            </tr></tbody>
+        </table>
+    </div></div>
+
+</div></div></div>
+</body>
+</html>

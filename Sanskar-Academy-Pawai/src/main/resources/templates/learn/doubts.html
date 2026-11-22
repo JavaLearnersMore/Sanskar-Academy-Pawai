@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Doubt Box | Sanskar Academy</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link th:href="@{/css/portal.css}" rel="stylesheet">
+</head>
+<body class="portal-body">
+<div th:replace="~{fragments/header :: header}"></div>
+<div th:replace="~{fragments/portal-nav :: nav(doubts)}"></div>
+<div class="portal-wrap">
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+    <h3 class="mb-3">&#10067; Doubt Box</h3>
+    <div class="soft-card mb-3"><div class="card-pad">
+        <form th:action="@{/student/doubts}" method="post" class="row g-2">
+            <div class="col-md-4"><select name="subjectId" class="form-select" required>
+                <option value="">Choose subject</option>
+                <option th:each="s : ${subjects}" th:value="${s.id}" th:text="${s.subjectName}"></option></select></div>
+            <div class="col-12"><textarea name="question" class="form-control" rows="3" maxlength="1500" placeholder="Write your doubt clearly" required></textarea></div>
+            <div class="col-12"><button class="btn btn-primary">Ask teacher</button></div>
+        </form>
+    </div></div>
+    <div th:if="${#lists.isEmpty(list)}" class="text-muted">You have not asked any doubt yet.</div>
+    <div class="soft-card mb-3" th:each="d : ${list}"><div class="card-pad">
+        <div class="d-flex justify-content-between"><b th:text="${d.subject.subjectName}"></b>
+            <span class="small text-muted" th:text="${#temporals.format(d.askedAt, 'dd MMM yyyy, HH:mm')}"></span></div>
+        <p class="mb-2" style="white-space:pre-wrap" th:text="${d.question}"></p>
+        <div th:if="${d.answer}" class="alert alert-success mb-0">
+            <div class="small text-muted" th:text="${'Answer from ' + d.answeredBy.fullName}"></div>
+            <div style="white-space:pre-wrap" th:text="${d.answer}"></div></div>
+        <span th:unless="${d.answer}" class="badge bg-warning text-dark">Waiting for teacher</span>
+    </div></div>
+
+</div>
+</body>
+</html>

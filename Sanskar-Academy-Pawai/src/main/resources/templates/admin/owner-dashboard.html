@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Owner Dashboard | Sanskar Academy</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link th:href="@{/css/portal.css}" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>body { background-color: #f4f6f9; } .card { border-radius: 12px; } .stat { font-size: 1.8rem; font-weight: 600; line-height: 1.1; }
+           .lbl { color: #6b7280; font-size: .85rem; } .tile a { text-decoration: none; color: inherit; }</style>
+</head>
+<body>
+<div th:replace="~{fragments/header :: header}"></div>
+<div class="container-fluid"><div class="row">
+<div class="col-md-2 p-0"><div th:replace="~{fragments/sidebar :: sidebar}"></div></div>
+<div class="col-md-10 p-4">
+    <h3 class="mb-3">&#128081; Owner Dashboard</h3>
+
+    <div class="row g-3 mb-3">
+        <div class="col-6 col-md-3"><div class="card"><div class="card-body"><div class="lbl">Fees collected so far</div>
+            <div class="stat" th:text="${'Rs. ' + #numbers.formatDecimal(d.paid, 1, 'COMMA', 0, 'POINT')}"></div>
+            <div class="lbl" th:text="${d.collectedPercent + '% of Rs. ' + #numbers.formatDecimal(d.payable, 1, 'COMMA', 0, 'POINT')}"></div></div></div></div>
+        <div class="col-6 col-md-3"><div class="card"><div class="card-body"><div class="lbl">Fees pending</div>
+            <div class="stat text-danger" th:text="${'Rs. ' + #numbers.formatDecimal(d.pending, 1, 'COMMA', 0, 'POINT')}"></div>
+            <div class="lbl" th:text="${d.overdueStudents + ' student(s) past due date'}"></div></div></div></div>
+        <div class="col-6 col-md-3"><div class="card"><div class="card-body"><div class="lbl">This month: in / out</div>
+            <div class="stat" th:text="${'Rs. ' + #numbers.formatDecimal(d.monthProfit, 1, 'COMMA', 0, 'POINT')}"></div>
+            <div class="lbl" th:text="${'Collected ' + #numbers.formatDecimal(d.monthCollected, 1, 'COMMA', 0, 'POINT') + ' - expenses ' + #numbers.formatDecimal(d.monthExpenses, 1, 'COMMA', 0, 'POINT') + ' - salaries ' + #numbers.formatDecimal(d.monthSalary, 1, 'COMMA', 0, 'POINT')}"></div></div></div></div>
+        <div class="col-6 col-md-3"><div class="card"><div class="card-body"><div class="lbl">Students / Teachers</div>
+            <div class="stat" th:text="${d.students + ' / ' + d.teachers}"></div>
+            <div class="lbl" th:text="${d.enquiriesMonth + ' new enquiries in 30 days'}"></div></div></div></div>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-6 col-md-3"><div class="card"><div class="card-body"><div class="lbl">Attendance today</div>
+            <div class="stat" th:text="${d.attendanceTodayPercent lt 0 ? '-' : d.attendanceTodayPercent + '%'}"></div>
+            <div class="lbl" th:text="${d.attendanceTodayMarked == 0 ? 'not marked yet' : d.attendanceTodayMarked + ' records'}"></div></div></div></div>
+        <div class="col-6 col-md-3"><div class="card"><div class="card-body"><div class="lbl">Lectures taken this month</div>
+            <div class="stat" th:text="${d.lecturesTakenPercent + '%'}"></div>
+            <div class="lbl" th:text="${d.lecturesTaken + ' taken, ' + d.lecturesNotTaken + ' not taken'}"></div></div></div></div>
+        <div class="col-6 col-md-3"><div class="card"><div class="card-body"><div class="lbl">Admissions</div>
+            <div class="stat" th:text="${d.enquiriesNew + ' new'}"></div>
+            <div class="lbl" th:text="${d.enquiriesAdmitted + ' admitted in total'}"></div></div></div></div>
+        <div class="col-6 col-md-3"><div class="card"><div class="card-body"><div class="lbl">Waiting for you</div>
+            <div class="small tile">
+                <a th:href="@{/admin/fee-requests}" th:text="${d.feeRequestsPending + ' fee payment request(s)'}"></a><br>
+                <a th:href="@{/admin/enquiries}" th:text="${d.followUpsDue + ' enquiry follow-up(s)'}"></a><br>
+                <span th:text="${d.leavesPending + ' leave application(s)'}"></span><br>
+                <span th:text="${d.usersPending + ' account(s) to approve'}"></span>
+            </div></div></div></div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-lg-8"><div class="card"><div class="card-body">
+            <h6>Money in and out - last 6 months (Rs.)</h6>
+            <div style="position:relative;height:300px"><canvas id="money" role="img" aria-label="Bar chart of fees collected against expenses and salaries for the last six months"></canvas></div>
+        </div></div></div>
+        <div class="col-lg-4"><div class="card"><div class="card-body">
+            <h6>Highest pending fees</h6>
+            <div th:if="${#lists.isEmpty(d.topPending)}" class="text-muted">No pending fees.</div>
+            <table class="table table-sm mb-0" th:unless="${#lists.isEmpty(d.topPending)}">
+                <tbody><tr th:each="f : ${d.topPending}">
+                    <td th:text="${f.studentName}"></td>
+                    <td class="text-end" th:text="${'Rs. ' + #numbers.formatDecimal(f.pending, 1, 'COMMA', 0, 'POINT')}"></td></tr></tbody>
+            </table>
+            <a th:href="@{/admin/fee-reminders}" class="small">Open fee reminders &rarr;</a>
+        </div></div></div>
+    </div>
+    <script th:inline="javascript">
+        const labels = /*[[${d.labels}]]*/ [];
+        const collected = /*[[${d.collected}]]*/ [];
+        const spent = /*[[${d.expenses}]]*/ [];
+        const salaries = /*[[${d.salaries}]]*/ [];
+        const out = spent.map((v, i) => Number(v) + Number(salaries[i]));
+        new Chart(document.getElementById('money'), {
+            type: 'bar',
+            data: { labels: labels, datasets: [
+                { label: 'Fees collected', data: collected.map(Number), backgroundColor: '#2563eb', borderRadius: 3 },
+                { label: 'Expenses + salaries', data: out, backgroundColor: '#ea580c', borderRadius: 3 } ] },
+            options: { responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom' } },
+                scales: { y: { beginAtZero: true, grid: { color: '#e5e7eb' } }, x: { grid: { display: false } } } }
+        });
+    </script>
+</div></div></div>
+</body>
+</html>

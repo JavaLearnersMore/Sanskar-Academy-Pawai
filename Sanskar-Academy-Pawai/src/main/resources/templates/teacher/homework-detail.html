@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Check Homework | Sanskar Academy</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link th:href="@{/css/portal.css}" rel="stylesheet">
+</head>
+<body class="portal-body">
+<div th:replace="~{fragments/header :: header}"></div>
+<div th:replace="~{fragments/portal-nav :: nav(homework)}"></div>
+<div class="portal-wrap">
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+    <a th:href="@{/teacher/homework}" class="btn btn-sm btn-outline-secondary mb-2">&larr; All homework</a>
+    <h3 th:text="${h.title}"></h3>
+    <p class="text-muted mb-1" th:text="${h.subject.classEntity.className + ' - ' + h.subject.subjectName + ' | Due ' + h.dueDate}"></p>
+    <p th:if="${h.description}" th:text="${h.description}"></p>
+    <p th:if="${h.attachmentPath}"><a th:href="@{'/files/homework/' + ${h.id}}" th:text="${'Download: ' + h.attachmentName}"></a></p>
+    <div class="soft-card"><div class="card-pad">
+        <div class="table-responsive">
+        <table class="table align-middle">
+            <thead><tr><th>Student</th><th>Status</th><th>Answer</th><th style="min-width:260px">Marks &amp; remark</th></tr></thead>
+            <tbody>
+            <tr th:each="r : ${rows}">
+                <td th:text="${r.student.fullName}"></td>
+                <td>
+                    <span th:if="${r.submission == null}" class="badge bg-warning text-dark">Not submitted</span>
+                    <span th:if="${r.submission != null and r.submission.late}" class="badge bg-secondary">Late</span>
+                    <span th:if="${r.submission != null and !r.submission.late}" class="badge bg-primary">On time</span>
+                    <div class="small text-muted" th:if="${r.submission != null}" th:text="${#temporals.format(r.submission.submittedAt, 'dd MMM, HH:mm')}"></div>
+                </td>
+                <td>
+                    <div th:if="${r.submission != null and r.submission.answerText != null}" class="small" style="white-space:pre-wrap" th:text="${r.submission.answerText}"></div>
+                    <a th:if="${r.submission != null and r.submission.filePath != null}" th:href="@{'/files/submission/' + ${r.submission.id}}" th:text="${r.submission.fileName}"></a>
+                </td>
+                <td>
+                    <form th:if="${r.submission != null}" th:action="@{'/teacher/homework/submission/' + ${r.submission.id} + '/check'}" method="post" class="d-flex gap-1">
+                        <input type="hidden" name="homeworkId" th:value="${h.id}">
+                        <input type="number" min="0" name="marks" class="form-control form-control-sm" style="width:80px" placeholder="Marks" th:value="${r.submission.marks}">
+                        <input name="remark" class="form-control form-control-sm" placeholder="Remark" maxlength="250" th:value="${r.submission.remark}">
+                        <button class="btn btn-sm btn-success">Save</button>
+                    </form>
+                    <span th:if="${r.submission != null and r.submission.checkedAt != null}" class="badge bg-success">Checked</span>
+                </td>
+            </tr>
+            </tbody>
+        </table></div>
+    </div></div>
+
+</div>
+</body>
+</html>
