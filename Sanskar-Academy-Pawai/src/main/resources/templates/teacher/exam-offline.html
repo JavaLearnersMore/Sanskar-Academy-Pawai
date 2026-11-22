@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <title>Paper exam marks | Sanskar Academy</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link th:href="@{/css/portal.css}" rel="stylesheet">
+</head>
+<body class="portal-body">
+<div th:replace="~{fragments/header :: header}"></div>
+<div th:replace="~{fragments/portal-nav :: nav('exams')}"></div>
+<div class="portal-wrap">
+<div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+<div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+<a th:href="@{/teacher/exams}" class="small">&larr; All exams</a>
+
+<div class="d-flex flex-wrap justify-content-between align-items-center my-2 gap-2">
+  <div>
+    <h3 class="mb-0" th:text="${exam.title}"></h3>
+    <span class="text-muted" th:text="${exam.subject.subjectName} + ' · ' + ${exam.subject.classEntity.className} + ' · total ' + ${exam.totalMarks} + ' marks'"></span>
+    <span class="badge bg-info text-dark ms-2">📝 Paper exam</span>
+    <span class="badge ms-1" th:classappend="${info.resultsPublished} ? 'bg-success' : 'bg-warning text-dark'"
+          th:text="${info.resultsPublished} ? 'Results published' : 'Not published yet'"></span>
+  </div>
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-secondary" th:href="@{/teacher/exams/{id}/paper(id=${exam.id})}" target="_blank">🖨 Print paper</a>
+    <a class="btn btn-outline-secondary" th:href="@{/teacher/exams/{id}(id=${exam.id})}">Questions</a>
+    <a class="btn btn-outline-success" th:if="${info.resultsPublished}" th:href="@{/teacher/exams/{id}/results(id=${exam.id})}">Results &amp; stats</a>
+  </div>
+</div>
+
+<div class="soft-card my-3"><div class="card-pad d-flex flex-wrap justify-content-between align-items-center gap-2">
+  <div>
+    <b th:text="${entered}"></b> of <b th:text="${#lists.size(rows)}"></b> students have marks.
+    <span class="text-muted small d-block" th:unless="${info.resultsPublished}">Students and parents see nothing until you publish. Absent students: leave marks empty.</span>
+    <span class="text-muted small d-block" th:if="${info.resultsPublished}">Published. If you change marks now, the result pages update at once (no new message is sent).</span>
+  </div>
+  <form th:action="@{/teacher/exams/{id}/offline/publish(id=${exam.id})}" method="post"
+        onsubmit="return confirm('Publish results? Students and their parents will be informed (only the ones who switched messages on get SMS / WhatsApp / e-mail).');">
+    <button class="btn btn-success" th:text="${info.resultsPublished} ? 'Re-publish changes' : '🚀 Publish results to students & parents'" th:disabled="${entered == 0}"></button>
+  </form>
+</div></div>
+
+<div class="soft-card"><div class="card-title-row"><h5>Marks and answer sheets</h5></div>
+<div class="card-pad">
+  <div class="small text-muted mb-3">Take a clear photo of each answer sheet (JPG / PNG / PDF, up to 8 MB each, 12 files per student) and attach it with the marks. Only the teacher, the student and the parent can open these files.</div>
+  <div class="table-responsive">
+  <table class="table align-middle">
+    <thead class="table-light"><tr><th style="min-width:160px;">Student</th><th style="min-width:360px;">Marks / remark / upload</th><th style="min-width:200px;">Saved sheets</th></tr></thead>
+    <tbody>
+    <tr th:each="r : ${rows}" th:id="'s' + ${r.student.id}">
+      <td><div class="fw-semibold" th:text="${r.student.fullName}"></div>
+          <span class="badge bg-success" th:if="${r.marks != null}" th:text="${r.marks} + ' / ' + ${exam.totalMarks}"></span>
+          <span class="badge bg-secondary" th:if="${r.marks == null}">no marks</span></td>
+      <td>
+        <form th:action="@{/teacher/exams/{id}/offline/student/{sid}(id=${exam.id},sid=${r.student.id})}" method="post" enctype="multipart/form-data">
+          <div class="d-flex gap-2 mb-2">
+            <input type="number" name="marks" min="0" th:max="${exam.totalMarks}" class="form-control" style="width:110px" placeholder="Marks" th:value="${r.marks}">
+            <input name="remarks" maxlength="290" class="form-control" placeholder="Remark (optional)" th:value="${r.remarks}">
+          </div>
+          <div class="d-flex gap-2">
+            <input type="file" name="files" multiple accept="image/*,application/pdf" class="form-control form-control-sm">
+            <button class="btn btn-primary btn-sm">Save</button>
+          </div>
+        </form>
+      </td>
+      <td>
+        <div class="d-flex flex-wrap gap-2">
+          <div th:each="s, st : ${r.sheets}" class="border rounded p-1 text-center" style="width:92px;">
+            <a th:href="@{/exams/sheet/{id}(id=${s.id})}" target="_blank" rel="noopener" class="text-decoration-none">
+              <img th:if="${s.image}" th:src="@{/exams/sheet/{id}(id=${s.id})}" alt="sheet" style="max-width:100%;max-height:70px;">
+              <div th:unless="${s.image}" class="py-2">📄 PDF</div>
+              <div class="small" th:text="'Page ' + ${st.count}"></div></a>
+            <form th:action="@{/teacher/exams/{id}/offline/sheet/{sid}/delete(id=${exam.id},sid=${s.id})}" method="post" class="m-0"
+                  onsubmit="return confirm('Remove this file?');"><button class="btn btn-sm btn-outline-danger py-0 w-100">✕</button></form>
+          </div>
+          <span class="text-muted small" th:if="${#lists.isEmpty(r.sheets)}">none</span>
+        </div>
+      </td>
+    </tr>
+    <tr th:if="${#lists.isEmpty(rows)}"><td colspan="3" class="text-center text-muted py-4">No students are enrolled in this class yet.</td></tr>
+    </tbody>
+  </table></div>
+</div></div>
+</div>
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

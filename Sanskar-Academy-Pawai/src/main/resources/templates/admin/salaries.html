@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Teacher Salary | Sanskar Academy</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link th:href="@{/css/portal.css}" rel="stylesheet">
+    <style> body { background-color: #f4f6f9; } .card { border-radius: 12px; } </style>
+</head>
+<body>
+
+<div th:replace="~{fragments/header :: header}"></div>
+
+<div class="container-fluid"><div class="row">
+
+    <div class="col-md-2 p-0"><div th:replace="~{fragments/sidebar :: sidebar}"></div></div>
+
+    <div class="col-md-10 p-4">
+
+        <h3 class="mb-4">💼 Teacher Salary</h3>
+
+        <div th:if="${success}" class="alert alert-success alert-dismissible fade show">
+            <span th:text="${success}"></span><button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show">
+            <span th:text="${error}"></span><button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <div class="card shadow mb-4"><div class="card-body">
+            <h5 class="mb-3">Pay Salary</h5>
+            <form th:action="@{/admin/salaries/pay}" method="post" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Teacher</label>
+                    <select name="teacherId" id="teacherSel" class="form-select" required>
+                        <option value="">Select teacher</option>
+                        <option th:each="t : ${teachers}" th:value="${t.id}"
+                                th:data-base="${lastBase.get(t.id)}"
+                                th:text="${t.fullName} + (${paidThisMonth.contains(t.id)} ? ' (paid this month)' : '')"></option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Month</label>
+                    <select name="month" class="form-select">
+                        <option th:each="m : ${#numbers.sequence(1,12)}" th:value="${m}"
+                                th:text="${T(java.time.Month).of(m).getDisplayName(T(java.time.format.TextStyle).FULL, T(java.util.Locale).ENGLISH)}"
+                                th:selected="${m == month}"></option>
+                    </select>
+                </div>
+                <div class="col-md-1">
+                    <label class="form-label">Year</label>
+                    <input type="number" name="year" class="form-control" th:value="${year}" min="2000" max="2100" required>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Base (₹)</label>
+                    <input type="number" step="0.01" min="1" name="baseAmount" id="baseAmt" class="form-control" required>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Bonus (₹)</label>
+                    <input type="number" step="0.01" min="0" name="bonus" class="form-control" value="0">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Deduction (₹)</label>
+                    <input type="number" step="0.01" min="0" name="deduction" class="form-control" value="0">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Payment mode</label>
+                    <select name="paymentMode" class="form-select">
+                        <option th:each="m : ${paymentModes}" th:value="${m}" th:text="${m}" th:selected="${m.name()=='BANK_TRANSFER'}"></option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Payment date</label>
+                    <input type="date" name="paymentDate" class="form-control" th:value="${today}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Remarks</label>
+                    <input type="text" name="remarks" class="form-control" maxlength="200">
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button class="btn btn-success w-100">Pay &amp; Slip</button>
+                </div>
+            </form>
+            <small class="text-muted">Each salary is also saved in Expenses (category SALARY), so Finance and Net Profit update automatically.</small>
+        </div></div>
+
+        <div class="card shadow"><div class="card-body">
+            <h5 class="mb-3">Salary History</h5>
+            <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-dark">
+                <tr><th>Slip</th><th>Teacher</th><th>Month</th><th class="text-end">Base</th><th class="text-end">Bonus</th>
+                    <th class="text-end">Deduction</th><th class="text-end">Net</th><th>Paid on</th><th>Mode</th><th></th></tr>
+                </thead>
+                <tbody>
+                <tr th:each="s : ${salaries}">
+                    <td th:text="${s.slipNumber}"></td>
+                    <td class="fw-semibold" th:text="${s.teacher.fullName}"></td>
+                    <td th:text="${s.periodLabel}"></td>
+                    <td class="text-end" th:text="${#numbers.formatDecimal(s.baseAmount,1,'COMMA',2,'POINT')}"></td>
+                    <td class="text-end text-success" th:text="${#numbers.formatDecimal(s.bonus,1,'COMMA',2,'POINT')}"></td>
+                    <td class="text-end text-danger" th:text="${#numbers.formatDecimal(s.deduction,1,'COMMA',2,'POINT')}"></td>
+                    <td class="text-end fw-bold" th:text="${#numbers.formatDecimal(s.netAmount,1,'COMMA',2,'POINT')}"></td>
+                    <td th:text="${#temporals.format(s.paymentDate,'dd MMM yyyy')}"></td>
+                    <td><span class="badge bg-info text-dark" th:text="${s.paymentMode}"></span></td>
+                    <td><a class="btn btn-sm btn-outline-primary" th:href="@{/admin/salaries/slip/{id}(id=${s.id})}">🖨 Slip</a></td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(salaries)}"><td colspan="10" class="text-center text-muted py-4">No salary paid yet</td></tr>
+                </tbody>
+            </table>
+            </div>
+        </div></div>
+    </div>
+</div></div>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // pre-fill base salary with the last one paid to that teacher
+    document.getElementById('teacherSel').addEventListener('change', function () {
+        var base = this.options[this.selectedIndex].dataset.base;
+        if (base) document.getElementById('baseAmt').value = base;
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title th:text="${exam.title} + ' - Question paper'">Question paper</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { font-family: "Times New Roman", serif; color:#000; margin:0; background:#eee; }
+        .page { width:210mm; min-height:297mm; margin:10px auto; background:#fff; padding:15mm 16mm; box-sizing:border-box; }
+        h1 { text-align:center; margin:0; font-size:22pt; letter-spacing:1px; }
+        .sub { text-align:center; font-size:12pt; margin:2px 0 8px; }
+        .meta { display:flex; flex-wrap:wrap; justify-content:space-between; border-top:2px solid #000; border-bottom:2px solid #000; padding:5px 0; font-size:12pt; margin-bottom:8px; }
+        .stu { display:flex; gap:20px; font-size:12pt; margin:10px 0; }
+        .stu span { flex:1; border-bottom:1px solid #000; padding-bottom:2px; }
+        .inst { font-size:11pt; border:1px solid #000; padding:5px 8px; margin-bottom:12px; }
+        .q { margin:0 0 14px; page-break-inside:avoid; font-size:12.5pt; }
+        .q .row { display:flex; justify-content:space-between; gap:12px; }
+        .q .m { white-space:nowrap; font-weight:bold; }
+        .opts { display:grid; grid-template-columns:1fr 1fr; gap:3px 20px; margin:4px 0 0 22px; }
+        .key { font-weight:bold; text-decoration:underline; }
+        .line { border-bottom:1px solid #777; height:22px; margin-left:22px; }
+        .ans { margin:4px 0 0 22px; font-size:11pt; border-left:3px solid #000; padding-left:8px; }
+        .bar { text-align:center; margin:10px; font-family:Arial,sans-serif; }
+        .bar button, .bar a { padding:8px 18px; font-size:14px; margin:0 4px; cursor:pointer; }
+        .foot { text-align:center; margin-top:16px; font-size:11pt; }
+        @media print { body{background:#fff} .page{margin:0;width:auto;min-height:0;padding:0} .bar{display:none} @page{size:A4;margin:14mm} }
+    </style>
+</head>
+<body>
+<div class="bar">
+    <button onclick="window.print()">🖨 Print / Save as PDF</button>
+    <a th:href="@{/teacher/exams/{id}(id=${exam.id})}">Back to exam</a>
+    <span th:if="${withKey}" style="color:#b00;font-weight:bold"> ANSWER KEY - for teacher only, do not give to students</span>
+</div>
+<div class="page">
+    <h1>SANSKAR ACADEMY CLASSES</h1>
+    <div class="sub" th:text="${exam.title}"></div>
+    <div class="meta">
+        <div th:text="'Class: ' + ${exam.subject.classEntity.className}"></div>
+        <div th:text="'Subject: ' + ${exam.subject.subjectName}"></div>
+        <div th:if="${info != null and info.examDate != null}" th:text="'Date: ' + ${#temporals.format(info.examDate,'dd MMM yyyy')}"></div>
+        <div th:unless="${info != null and info.examDate != null}">Date: ____________</div>
+        <div th:text="'Time: ' + ${exam.durationMinutes} + ' min'"></div>
+        <div th:text="'Total marks: ' + ${exam.totalMarks}"></div>
+    </div>
+    <div class="stu"><span>Student name:</span><span style="max-width:60mm">Roll no.:</span></div>
+    <div class="inst" th:if="${exam.description != null}"><b>Instructions:</b> <span th:text="${exam.description}"></span></div>
+
+    <div class="q" th:each="q, st : ${exam.questions}">
+        <div class="row">
+            <div><b th:text="'Q' + ${st.count} + '.'"></b> <span th:text="${q.questionText}"></span></div>
+            <div class="m" th:text="'[' + ${q.marks} + ']'"></div>
+        </div>
+        <div class="opts" th:if="${q.type.name() == 'MCQ'}">
+            <div th:each="L : ${ {'A','B','C','D'} }" th:class="${withKey and L == q.correctOption} ? 'key'"
+                 th:text="'(' + ${L} + ') ' + ${q.optionText(L)}"></div>
+        </div>
+        <th:block th:if="${q.type.name() == 'SHORT'}">
+            <th:block th:unless="${withKey}">
+                <div class="line" th:each="i : ${#numbers.sequence(1, q.marks > 4 ? 8 : q.marks * 2)}"></div>
+            </th:block>
+            <div class="ans" th:if="${withKey}" th:text="'Answer: ' + ${q.modelAnswer}"></div>
+        </th:block>
+    </div>
+    <div class="foot">*** End of question paper ***</div>
+</div>
+</body>
+</html>

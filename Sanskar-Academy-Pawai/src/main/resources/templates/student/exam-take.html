@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <title>Exam | Sanskar Academy</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link th:href="@{/css/portal.css}" rel="stylesheet">
+    <style>
+      .guard-on .qtext { -webkit-user-select:none; user-select:none; }
+      .guard-on .q-opt span { -webkit-user-select:none; user-select:none; }
+      #startGate { position:fixed; inset:0; background:rgba(15,23,42,.94); z-index:2000; display:none; align-items:center; justify-content:center; padding:20px; }
+      #startGate .box { background:#fff; border-radius:14px; max-width:480px; padding:26px; text-align:center; }
+      .warn-pill { font-size:.85rem; }
+      .qhidden { display:none; }
+    </style>
+</head>
+<body class="portal-body" th:classappend="${sec.blockCopy} ? 'guard-on'">
+<div th:replace="~{fragments/header :: header}"></div>
+<div th:replace="~{fragments/portal-nav :: nav('exams')}"></div>
+<div class="portal-wrap">
+<div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+<div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+<div class="timer-bar mb-3">
+  <div><b th:text="${exam.title}"></b>
+    <div class="small text-muted" th:text="${exam.subject.subjectName} + ' · ' + ${paperTotal} + ' marks · ' + ${#lists.size(paper)} + ' questions'"></div></div>
+  <div class="d-flex align-items-center gap-3">
+    <span th:if="${sec.strict}" class="badge bg-light text-dark border warn-pill">Warnings: <b id="warnCount" th:text="${violations}">0</b> / <span th:text="${sec.maxWarnings}">3</span></span>
+    <span th:if="${sec.perQuestion}" class="badge bg-warning text-dark warn-pill">Question time: <b id="qClock">--</b>s</span>
+    <div class="time" id="clock">--:--</div>
+  </div>
+</div>
+
+<div th:if="${sec.strict}" class="alert alert-warning py-2 small">
+  Stay on this page and in full screen. Leaving the exam page (another tab, another window or an app) is counted as a warning.
+  After <b th:text="${sec.maxWarnings}">3</b> warnings the exam is submitted automatically. Your teacher can see every warning.
+</div>
+<p class="text-muted" th:if="${exam.description}" th:text="${exam.description}"></p>
+
+<form id="examForm" th:action="@{/student/exams/attempt/{id}/submit(id=${attempt.id})}" method="post" autocomplete="off">
+  <div class="soft-card mb-3 qbox" th:each="p, st : ${paper}" th:attr="data-idx=${st.index}" th:classappend="${sec.perQuestion and st.index != qstate.index} ? 'qhidden'">
+    <div class="card-pad">
+      <div class="d-flex justify-content-between">
+        <div class="fw-semibold qtext" th:text="${p.number} + '. ' + ${p.question.questionText}"></div>
+        <span class="badge bg-light text-dark border" th:text="${p.question.marks} + ' mark(s)'"></span></div>
+      <div class="mt-3" th:if="${p.question.type.name() == 'MCQ'}">
+        <label class="q-opt" th:each="o : ${p.options}">
+          <input type="radio" th:name="'q_' + ${p.question.id}" th:value="${o.value}"><b th:text="${o.label} + '.'"></b> <span th:text="${o.text}"></span></label>
+      </div>
+      <div class="mt-3" th:if="${p.question.type.name() == 'SHORT'}">
+        <textarea class="form-control no-paste" rows="4" maxlength="2000" th:name="'q_' + ${p.question.id}" placeholder="Write your answer in your own words..."></textarea></div>
+    </div>
+  </div>
+
+  <div th:if="${sec.perQuestion}" class="mb-3">
+    <button type="button" id="nextBtn" class="btn btn-primary">Next question &rarr;</button>
+    <span class="text-muted small ms-2">You cannot go back to a question.</span>
+  </div>
+  <button id="submitBtn" class="btn btn-success btn-lg" th:classappend="${sec.perQuestion} ? 'd-none'" onclick="return confirm('Submit your exam now?');">Submit exam</button>
+</form>
+
+<div id="startGate"><div class="box">
+  <h5 class="mb-2">Ready to continue?</h5>
+  <p class="text-muted small mb-3" id="gateText">The exam runs in full screen. Click the button to continue.</p>
+  <button type="button" id="gateBtn" class="btn btn-primary btn-lg">Continue in full screen</button>
+</div></div>
+
+<script th:inline="javascript">
+var remaining = /*[[${attempt.remainingSeconds}]]*/ 600;
+var STRICT = /*[[${sec.strict}]]*/ true;
+var BLOCK = /*[[${sec.blockCopy}]]*/ true;
+var PERQ = /*[[${sec.perQuestion}]]*/ false;
+var QIDX = /*[[${qstate != null ? qstate.index : 0}]]*/ 0;
+var QREM = /*[[${qstate != null ? qstate.remaining : 0}]]*/ 0;
+var QTOTAL = /*[[${#lists.size(paper)}]]*/ 1;
+var MAXW = /*[[${sec.maxWarnings}]]*/ 3;
+var EVENT_URL = /*[[@{/student/exams/attempt/{id}/event(id=${attempt.id})}]]*/ '';
+var NEXT_URL = /*[[@{/student/exams/attempt/{id}/next(id=${attempt.id})}]]*/ '';
+var csrfEl = document.querySelector('#examForm input[name="_csrf"]');
+var CSRF = csrfEl ? csrfEl.value : '';
+var form = document.getElementById('examForm'), clock = document.getElementById('clock'), done = false;
+var armed = false;           // warnings start after the student clicked "continue in full screen"
+
+function submitNow(){ if(done) return; done = true; window.onbeforeunload = null; form.submit(); }
+
+/* ---------- main timer ---------- */
+function tick(){
+  var m = Math.floor(remaining/60), s = remaining%60;
+  clock.textContent = (m<10?'0':'')+m+':'+(s<10?'0':'')+s;
+  clock.classList.toggle('low', remaining<=60);
+  if(remaining<=0 && !done){ submitNow(); return; }
+  remaining--; setTimeout(tick,1000);
+}
+tick();
+form.addEventListener('submit', function(){ done = true; window.onbeforeunload = null; });
+window.onbeforeunload = function(){ return 'Your exam is still running.'; };
+
+/* ---------- report an event to the server ---------- */
+function report(type, detail){
+  if(done) return;
+  var body = new URLSearchParams(); body.append('type', type); if(detail) body.append('detail', detail);
+  fetch(EVENT_URL, { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded','X-CSRF-TOKEN':CSRF}, body: body.toString(), keepalive:true, credentials:'same-origin' })
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(j){
+      if(!j) return;
+      var w = document.getElementById('warnCount'); if(w) w.textContent = j.count;
+      if(j.autoSubmit){ submitNow(); }
+      else if(STRICT && (type==='TAB_HIDDEN'||type==='WINDOW_BLUR'||type==='FULLSCREEN_EXIT')){
+        showGate('Warning ' + j.count + ' of ' + j.max + ': you left the exam page. Do it ' + (j.max - j.count) + ' more time(s) and the exam will be submitted automatically.');
+      }
+    }).catch(function(){});
+}
+
+/* ---------- full screen + gate ---------- */
+var gate = document.getElementById('startGate'), gateText = document.getElementById('gateText');
+function inFull(){ return !!(document.fullscreenElement || document.webkitFullscreenElement); }
+function showGate(msg){ if(done) return; if(msg) gateText.textContent = msg; gate.style.display = 'flex'; }
+document.getElementById('gateBtn').addEventListener('click', function(){
+  var el = document.documentElement, p;
+  try { p = (el.requestFullscreen || el.webkitRequestFullscreen).call(el); } catch(e){ p = null; }
+  if(p && p.catch) p.catch(function(){ report('FULLSCREEN_DENIED'); });
+  gate.style.display = 'none'; armed = true;
+});
+if(STRICT){ showGate('This exam runs in full screen. Warnings start once you continue. Do not switch tabs or windows.'); }
+else { armed = true; }
+
+if(STRICT){
+  document.addEventListener('visibilitychange', function(){ if(armed && document.hidden) report('TAB_HIDDEN'); });
+  window.addEventListener('blur', function(){ if(armed && !done) setTimeout(function(){ if(!document.hasFocus()) report('WINDOW_BLUR'); }, 400); });
+  ['fullscreenchange','webkitfullscreenchange'].forEach(function(ev){
+    document.addEventListener(ev, function(){ if(armed && !inFull() && !done) report('FULLSCREEN_EXIT'); });
+  });
+}
+
+/* ---------- copy / paste / right-click ---------- */
+if(BLOCK){
+  ['copy','cut','paste','dragstart','drop'].forEach(function(ev){
+    document.addEventListener(ev, function(e){ e.preventDefault(); report(ev==='paste'||ev==='drop' ? 'PASTE_BLOCKED' : 'COPY_BLOCKED'); });
+  });
+  document.addEventListener('contextmenu', function(e){ e.preventDefault(); report('MENU_BLOCKED'); });
+  document.addEventListener('selectstart', function(e){
+    var t = e.target; if(t && t.nodeType===1 && (t.tagName==='TEXTAREA'||t.tagName==='INPUT')) return;
+    if(t && t.closest && t.closest('.qtext, .q-opt')) e.preventDefault();
+  });
+  document.addEventListener('keydown', function(e){
+    if((e.ctrlKey||e.metaKey) && ['c','v','x','a','p','s','u'].indexOf(e.key.toLowerCase())>=0){
+      var inBox = e.target && e.target.tagName==='TEXTAREA' && ['a'].indexOf(e.key.toLowerCase())>=0;
+      if(!inBox){ e.preventDefault(); report(e.key.toLowerCase()==='v' ? 'PASTE_BLOCKED' : 'COPY_BLOCKED'); }
+    }
+  });
+}
+
+/* ---------- time per question ---------- */
+if(PERQ){
+  var boxes = document.querySelectorAll('.qbox'), qClock = document.getElementById('qClock');
+  var nextBtn = document.getElementById('nextBtn'), submitBtn = document.getElementById('submitBtn');
+  function show(i){
+    for(var k=0;k<boxes.length;k++){ boxes[k].classList.toggle('qhidden', k!==i); }
+    QIDX = i;
+    if(i >= boxes.length-1){ nextBtn.classList.add('d-none'); submitBtn.classList.remove('d-none'); }
+  }
+  function goNext(){
+    fetch(NEXT_URL, { method:'POST', headers:{'X-CSRF-TOKEN':CSRF}, credentials:'same-origin' })
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(j){
+        if(!j) return;
+        if(j.finished){ QREM = 0; submitNow(); return; }
+        QREM = j.remaining; show(j.index);
+      }).catch(function(){});
+  }
+  nextBtn.addEventListener('click', goNext);
+  show(QIDX);
+  (function qtick(){
+    if(done) return;
+    qClock.textContent = QREM;
+    if(QREM <= 0){
+      if(QIDX >= boxes.length-1){ submitNow(); return; }
+      QREM = 9999; goNext();
+    } else { QREM--; }
+    setTimeout(qtick, 1000);
+  })();
+}
+</script>
+</div>
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

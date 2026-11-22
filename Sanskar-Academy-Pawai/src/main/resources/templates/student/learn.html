@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <title>AI Learn | Sanskar Academy</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link th:href="@{/css/portal.css(v=2)}" rel="stylesheet">
+    <style>
+        /* own layout: columns never stretch, every card keeps its natural height (no overlap with the footer) */
+        .learn-grid { display: grid; grid-template-columns: minmax(280px, 1fr) 2fr; gap: 24px; align-items: start; }
+        .learn-grid .soft-card { height: auto; }
+        .learn-side .learn-form { position: sticky; top: 12px; }
+        .learn-main { min-width: 0; }
+        @media (max-width: 991px) { .learn-grid { grid-template-columns: 1fr; } .learn-side .learn-form { position: static; } }
+    </style>
+</head>
+<body class="portal-body">
+<div th:replace="~{fragments/header :: header}"></div>
+<div th:replace="~{fragments/portal-nav :: nav('learn')}"></div>
+<div class="portal-wrap">
+<div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+<div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+<div class="hero mb-4">
+  <h2>🤖 AI Study Buddy</h2>
+  <p class="sub">Type any chapter, get a clear lesson, ask doubts and practise questions.</p>
+</div>
+<div class="alert alert-warning" th:unless="${aiEnabled}">AI is not switched on yet - ask the admin to set the API key.</div>
+
+<div class="learn-grid">
+  <div class="learn-side">
+    <div class="soft-card learn-form"><div class="card-title-row"><h5>What do you want to learn?</h5></div>
+      <div class="card-pad">
+        <form th:action="@{/student/learn/explain}" method="post" onsubmit="this.querySelector('button').disabled=true;this.querySelector('button').innerText='Preparing your lesson...';">
+          <div class="mb-2"><label class="form-label">Subject</label>
+            <input name="subject" class="form-control" maxlength="80" placeholder="Science" th:value="${state.subjectName}" required></div>
+          <div class="mb-2"><label class="form-label">Chapter / topic</label>
+            <input name="topic" class="form-control" maxlength="200" placeholder="Photosynthesis" th:value="${state.topic}" required></div>
+          <div class="mb-3"><label class="form-label">Explain it</label>
+            <select name="level" class="form-select">
+              <option>Simple</option><option>Detailed</option><option>Exam-focused</option></select></div>
+          <button class="btn btn-primary w-100" th:disabled="${!aiEnabled}">✨ Teach me</button>
+        </form>
+        <form th:if="${state.hasLesson()}" th:action="@{/student/learn/reset}" method="post" class="mt-2">
+          <button class="btn btn-sm btn-outline-secondary w-100">Start a new topic</button></form>
+        <div class="small text-muted mt-3">Class: <b th:text="${className}"></b>. AI answers may contain mistakes - confirm with your teacher or textbook.</div>
+      </div></div>
+  </div>
+
+  <div class="learn-main">
+    <div class="soft-card mb-4" id="lessonCard" th:if="${state.hasLesson()}">
+      <div class="card-title-row"><h5 th:text="'📖 ' + ${state.topic}"></h5></div>
+      <div class="card-pad"><div id="lesson" class="lesson-box"></div>
+        <pre id="lessonRaw" class="d-none" th:text="${state.lesson}"></pre></div>
+    </div>
+    <div class="soft-card mb-4" th:unless="${state.hasLesson()}">
+      <div class="card-pad empty-note">Your lesson will appear here 📚</div></div>
+
+    <div class="soft-card mb-4" id="chat" th:if="${state.hasLesson()}">
+      <div class="card-title-row"><h5>💬 Ask a doubt</h5></div>
+      <div class="card-pad">
+        <div class="chat-box mb-3">
+          <div th:each="m : ${state.chat}" class="bubble" th:classappend="${m.role == 'Student'} ? 'me' : 'ai'">
+            <div class="chat-text" th:attr="data-role=${m.role}" th:text="${m.text}" style="white-space:pre-wrap"></div></div>
+          <div class="empty-note" th:if="${#lists.isEmpty(state.chat)}">No questions yet.</div>
+        </div>
+        <form th:action="@{/student/learn/ask}" method="post" class="d-flex gap-2" onsubmit="this.querySelector('button').disabled=true;">
+          <input name="question" class="form-control" maxlength="500" placeholder="I did not understand..." required>
+          <button class="btn btn-primary">Ask</button></form>
+      </div>
+    </div>
+
+    <div class="soft-card" id="practice" th:if="${state.hasLesson()}">
+      <div class="card-title-row"><h5>📝 Practice questions</h5></div>
+      <div class="card-pad">
+        <form th:action="@{/student/learn/practice}" method="post" class="row g-2 align-items-end mb-3" onsubmit="this.querySelector('button').disabled=true;">
+          <div class="col-4"><label class="form-label">How many</label>
+            <input type="number" name="count" value="5" min="1" max="10" class="form-control"></div>
+          <div class="col-4"><label class="form-label">Level</label>
+            <select name="difficulty" class="form-select"><option>Easy</option><option selected>Medium</option><option>Hard</option></select></div>
+          <div class="col-4"><button class="btn btn-outline-primary w-100">Make questions</button></div>
+        </form>
+        <div th:each="q, st : ${state.practice}" class="mb-4 practice-q" th:attr="data-correct=${q.correctIndex}">
+          <div class="fw-semibold mb-2" th:text="${st.count} + '. ' + ${q.question}"></div>
+          <label class="q-opt" th:each="o, os : ${q.options}">
+            <input type="radio" th:name="'p' + ${st.index}" th:value="${os.index}"><span th:text="${o}"></span></label>
+          <button type="button" class="btn btn-sm btn-success check-btn">Check answer</button>
+          <div class="explain mt-2 small d-none alert alert-info" th:text="'💡 ' + ${q.explanation}"></div>
+        </div>
+        <div class="empty-note" th:if="${#lists.isEmpty(state.practice)}">Press "Make questions" to test yourself.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Safe mini-markdown: escape everything first, then add a few tags.
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function inline(x){
+  return x.replace(/\*\*(.+?)\*\*/g,'<b>$1</b>')
+          .replace(/(^|[^*])\*([^*\s][^*]*?)\*(?!\*)/g,'$1<i>$2</i>')
+          .replace(/`(.+?)`/g,'<code>$1</code>');
+}
+function md(src){
+  var out=[], list=null;
+  function close(){ if(list){ out.push('</'+list+'>'); list=null; } }
+  esc(src).split('\n').forEach(function(line){
+    var t=line.trim(), m;
+    if((m=t.match(/^[-*\u2022]\s+(.*)/))){ if(list!=='ul'){close();out.push('<ul>');list='ul';} out.push('<li>'+inline(m[1])+'</li>'); return; }
+    if((m=t.match(/^(\d+)[.)]\s+(.*)/))){ if(list!=='ol'){close();out.push('<ol start="'+parseInt(m[1],10)+'">');list='ol';} out.push('<li>'+inline(m[2])+'</li>'); return; }
+    close();
+    if((m=t.match(/^#{1,4}\s+(.*)/))){ out.push('<h5>'+inline(m[1])+'</h5>'); }
+    else if(t!==''){ out.push('<p class="mb-2">'+inline(t)+'</p>'); }
+  });
+  close();
+  return out.join('');
+}
+var raw=document.getElementById('lessonRaw');
+if(raw){document.getElementById('lesson').innerHTML=md(raw.textContent);}
+document.querySelectorAll('.chat-text[data-role="Tutor"]').forEach(function(e){e.style.whiteSpace='normal';e.innerHTML=md(e.textContent);});
+var cb=document.querySelector('.chat-box'); if(cb){cb.scrollTop=cb.scrollHeight;}
+
+document.querySelectorAll('.practice-q').forEach(function(box){
+  box.querySelector('.check-btn').addEventListener('click',function(){
+    var right=parseInt(box.getAttribute('data-correct'),10);
+    var opts=box.querySelectorAll('.q-opt');
+    opts.forEach(function(l,i){
+      var inp=l.querySelector('input');
+      l.classList.remove('right','wrong');
+      if(i===right) l.classList.add('right'); else if(inp.checked) l.classList.add('wrong');
+      inp.disabled=true;
+    });
+    box.querySelector('.explain').classList.remove('d-none');
+    this.classList.add('d-none');
+  });
+});
+</script>
+</div>
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

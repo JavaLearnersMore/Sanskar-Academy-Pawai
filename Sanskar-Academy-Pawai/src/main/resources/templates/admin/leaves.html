@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Leave Requests | Sanskar Academy</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link th:href="@{/css/portal.css}" rel="stylesheet">
+    <style> body { background-color: #f4f6f9; } .card { border-radius: 12px; } </style>
+</head>
+<body>
+
+<div th:replace="~{fragments/header :: header}"></div>
+
+<div class="container-fluid"><div class="row">
+
+    <div class="col-md-2 p-0"><div th:replace="~{fragments/sidebar :: sidebar}"></div></div>
+
+    <div class="col-md-10 p-4">
+
+        <h3 class="mb-3">📝 Leave Requests
+            <span class="badge bg-warning text-dark fs-6" th:if="${pendingCount > 0}" th:text="${pendingCount} + ' pending'"></span>
+        </h3>
+
+        <div th:if="${success}" class="alert alert-success alert-dismissible fade show">
+            <span th:text="${success}"></span><button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show">
+            <span th:text="${error}"></span><button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <ul class="nav nav-pills mb-3">
+            <li class="nav-item" th:each="f : ${ {'ALL','PENDING','APPROVED','REJECTED','TEACHER','STUDENT'} }">
+                <a class="nav-link" th:classappend="${filter == f} ? 'active'"
+                   th:href="@{/admin/leaves(filter=${f})}" th:text="${f}"></a>
+            </li>
+        </ul>
+
+        <div class="card shadow"><div class="card-body">
+            <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-dark">
+                <tr><th>For</th><th>Type</th><th>Dates</th><th>Days</th><th>Reason</th><th>Status</th><th style="min-width:260px;">Action</th></tr>
+                </thead>
+                <tbody>
+                <tr th:each="l : ${leaves}">
+                    <td>
+                        <div class="fw-semibold" th:text="${l.personName}"></div>
+                        <small class="text-muted" th:text="'Applied by ' + ${l.applicant.fullName} + ' (' + ${l.applicantRole} + ')'"></small>
+                    </td>
+                    <td><span class="badge" th:classappend="${l.student == null} ? 'bg-primary' : 'bg-info text-dark'"
+                              th:text="${l.student == null} ? 'Teacher' : 'Student'"></span></td>
+                    <td th:text="${#temporals.format(l.fromDate,'dd MMM')} + ' - ' + ${#temporals.format(l.toDate,'dd MMM yyyy')}"></td>
+                    <td th:text="${l.days}"></td>
+                    <td th:text="${l.reason}" style="max-width:240px;"></td>
+                    <td>
+                        <span class="badge" th:classappend="${l.badgeClass}" th:text="${l.status}"></span>
+                        <small class="d-block text-muted" th:if="${l.reviewedBy != null}" th:text="'by ' + ${l.reviewedBy.fullName}"></small>
+                    </td>
+                    <td>
+                        <form th:if="${l.status.name() == 'PENDING'}" th:action="@{/admin/leaves/{id}/review(id=${l.id})}" method="post" class="d-flex gap-1 m-0">
+                            <input type="text" name="remarks" class="form-control form-control-sm" placeholder="Remarks" maxlength="300">
+                            <button name="action" value="APPROVE" class="btn btn-sm btn-success">✔</button>
+                            <button name="action" value="REJECT" class="btn btn-sm btn-danger">✖</button>
+                        </form>
+                        <span th:unless="${l.status.name() == 'PENDING'}" class="text-muted small" th:text="${l.reviewRemarks}"></span>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(leaves)}"><td colspan="7" class="text-center text-muted py-4">No leave requests</td></tr>
+                </tbody>
+            </table>
+            </div>
+        </div></div>
+    </div>
+</div></div>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

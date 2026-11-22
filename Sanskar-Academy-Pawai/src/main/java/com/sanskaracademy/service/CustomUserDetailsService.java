@@ -20,16 +20,14 @@ public class CustomUserDetailsService implements UserDetailsService {
                 .orElseThrow(() ->
                         new UsernameNotFoundException("User not found"));
         
-        if (!user.isEmailVerified())
-            throw new RuntimeException("Email not verified");
-
-        if (!user.isApprovedByAdmin())
-            throw new RuntimeException("Waiting for admin approval");
+        // not verified / not approved -> login is refused with a friendly message (see SecurityConfig)
+        boolean inactive = !user.isEmailVerified() || !user.isApprovedByAdmin();
 
         return org.springframework.security.core.userdetails.User
                 .withUsername(user.getUsername())
                 .password(user.getPassword())
                 .roles(user.getRole().getName())
+                .disabled(inactive)
                 .build();
     }
 }

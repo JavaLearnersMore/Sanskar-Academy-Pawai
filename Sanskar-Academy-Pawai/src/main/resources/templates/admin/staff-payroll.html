@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <title>Staff Salary | Sanskar Academy</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link th:href="@{/css/portal.css}" rel="stylesheet">
+    <style> body { background-color: #f4f6f9; } .card { border-radius: 12px; } </style>
+</head>
+<body>
+<div th:replace="~{fragments/header :: header}"></div>
+<div class="container-fluid"><div class="row">
+    <div class="col-md-2 p-0"><div th:replace="~{fragments/sidebar :: sidebar}"></div></div>
+    <div class="col-md-10 p-4">
+        <h3 class="mb-3">Staff Salary</h3>
+        <div th:replace="~{fragments/staff-tabs :: tabs('payroll')}"></div>
+        <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+        <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+        <form th:action="@{/admin/staff/payroll}" method="get" class="row g-2 mb-3 align-items-end">
+            <div class="col-auto"><label class="form-label">Month</label>
+                <select name="month" class="form-select">
+                    <option th:each="m : ${#numbers.sequence(1,12)}" th:value="${m}" th:selected="${m == month}" th:text="${T(java.time.Month).of(m).getDisplayName(T(java.time.format.TextStyle).FULL, T(java.util.Locale).ENGLISH)}"></option>
+                </select></div>
+            <div class="col-auto"><label class="form-label">Year</label><input type="number" name="year" class="form-control" th:value="${year}" min="2020" max="2100"></div>
+            <div class="col-auto"><button class="btn btn-outline-primary">Show</button></div>
+        </form>
+        <form th:action="@{/admin/staff/payroll/generate}" method="post" class="mb-3">
+            <input type="hidden" name="month" th:value="${month}"><input type="hidden" name="year" th:value="${year}">
+            <button class="btn btn-warning">Calculate salary for this month</button>
+            <span class="small text-muted ms-2">Uses attendance and your rules (<span th:text="${setting.paidLeavePerMonth}"></span> paid days, divided by <span th:text="${setting.monthDivisor}"></span>). You can run it again after changing attendance; paid rows stay unchanged.</span>
+        </form>
+        <div class="card shadow-sm"><div class="card-body">
+        <div class="table-responsive"><table class="table align-middle table-sm">
+            <thead class="table-light"><tr><th>Staff</th><th>Work days</th><th>Absent</th><th>Leave</th><th>Half</th><th>Cut days</th><th>Salary</th><th>Leave cut</th><th style="min-width:230px;">Other cut / Bonus</th><th>Net</th><th>Status</th></tr></thead>
+            <tbody>
+            <tr th:each="p : ${rows}">
+                <td><div class="fw-semibold" th:text="${p.staff.user.fullName}"></div>
+                    <div class="small text-warning" th:if="${p.unmarkedDays > 0}" th:text="${p.unmarkedDays} + ' day(s) not marked - counted present'"></div></td>
+                <td th:text="${p.workingDays}"></td><td th:text="${p.absentDays}"></td><td th:text="${p.leaveDays}"></td><td th:text="${p.halfDays}"></td>
+                <td th:text="${p.deductDays}"></td>
+                <td th:text="${p.grossSalary}"></td><td th:text="${p.leaveDeduction}"></td>
+                <td>
+                    <form th:if="${p.status.name() == 'DRAFT'}" th:action="@{/admin/staff/payroll/{id}/adjust(id=${p.id})}" method="post" class="d-flex gap-1 m-0">
+                        <input type="hidden" name="month" th:value="${month}"><input type="hidden" name="year" th:value="${year}">
+                        <input type="number" step="0.01" min="0" name="other" class="form-control form-control-sm" th:value="${p.otherDeduction}" title="Other deduction" style="width:80px;">
+                        <input type="number" step="0.01" min="0" name="bonus" class="form-control form-control-sm" th:value="${p.bonus}" title="Bonus" style="width:80px;">
+                        <input type="hidden" name="remarks" th:value="${p.remarks}">
+                        <button class="btn btn-sm btn-outline-primary">Set</button>
+                    </form>
+                    <span th:unless="${p.status.name() == 'DRAFT'}" th:text="'-' + ${p.otherDeduction} + ' / +' + ${p.bonus}"></span>
+                </td>
+                <td class="fw-bold" th:text="${p.netSalary}"></td>
+                <td>
+                    <form th:if="${p.status.name() == 'DRAFT'}" th:action="@{/admin/staff/payroll/{id}/pay(id=${p.id})}" method="post" class="m-0"
+                          onsubmit="return confirm('Mark this salary as paid? The staff member will be informed.');">
+                        <input type="hidden" name="month" th:value="${month}"><input type="hidden" name="year" th:value="${year}">
+                        <button class="btn btn-sm btn-success">Mark paid</button></form>
+                    <div th:unless="${p.status.name() == 'DRAFT'}"><span class="badge bg-success">PAID</span>
+                        <a class="small d-block" th:href="@{/admin/staff/payroll/{id}/slip(id=${p.id})}">Slip</a></div>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(rows)}"><td colspan="11" class="text-center text-muted py-4">Nothing calculated for this month yet. Press "Calculate".</td></tr>
+            </tbody></table></div>
+        </div></div>
+
+    </div></div></div>
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

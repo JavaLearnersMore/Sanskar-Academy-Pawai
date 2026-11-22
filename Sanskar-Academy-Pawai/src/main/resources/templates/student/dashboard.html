@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Student Dashboard | Sanskar Academy</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link th:href="@{/css/portal.css}" rel="stylesheet">
+</head>
+
+<body class="portal-body">
+
+<div th:replace="~{fragments/header :: header}"></div>
+<div th:replace="~{fragments/portal-nav :: nav('dashboard')}"></div>
+
+<div class="portal-wrap">
+
+    <!-- Hero -->
+    <div class="hero mb-4">
+        <span class="date-chip" th:text="${#temporals.format(today,'EEEE, dd MMMM yyyy')}"></span>
+        <h2>Hello, <span th:text="${student.fullName}">Student</span> 👋</h2>
+        <p class="sub">Track your attendance, fees and notifications in one place.</p>
+    </div>
+
+    <!-- AI learning + exams -->
+    <div class="row g-3 mb-4">
+        <div class="col-lg-5">
+            <a th:href="@{/student/learn}" class="text-decoration-none">
+                <div class="soft-card"><div class="card-pad d-flex align-items-center gap-3">
+                    <div class="stat-icon ic-purple">🤖</div>
+                    <div><div class="fw-bold text-dark">AI Study Buddy</div>
+                        <small class="text-muted">Learn any chapter, ask doubts, practise questions</small></div>
+                </div></div></a>
+        </div>
+        <div class="col-lg-7">
+            <div class="soft-card"><div class="card-title-row"><h5>🧠 Exams &amp; results</h5>
+                <a th:href="@{/student/exams}" class="small">View all</a></div>
+                <div class="card-pad">
+                    <div class="list-row" th:each="x : ${upcomingExams}">
+                        <div class="flex-grow-1" th:text="${x.exam.title} + ' (' + ${x.exam.subject.subjectName} + ')'"></div>
+                        <span class="badge bg-primary">To do</span></div>
+                    <a class="list-row text-decoration-none text-dark" th:each="r : ${recentResults}" th:href="@{/student/exams/attempt/{id}(id=${r.id})}">
+                        <div class="flex-grow-1" th:text="${r.exam.title}"></div>
+                        <span class="badge" th:classappend="${r.badgeClass}" th:text="${r.pending} ? 'Pending' : ${r.percentage} + '% · ' + ${r.grade}"></span></a>
+                    <div class="empty-note" th:if="${#lists.isEmpty(upcomingExams) and #lists.isEmpty(recentResults)}">No exams yet.</div>
+                </div></div>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-lg-3">
+            <div class="stat-tile">
+                <div class="stat-icon ic-green">✅</div>
+                <div>
+                    <div class="stat-label">Present</div>
+                    <div class="stat-value" th:text="${presentCount}">0</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="stat-tile">
+                <div class="stat-icon ic-red">❌</div>
+                <div>
+                    <div class="stat-label">Absent</div>
+                    <div class="stat-value" th:text="${absentCount}">0</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="stat-tile">
+                <div class="stat-icon ic-blue">📈</div>
+                <div>
+                    <div class="stat-label">Attendance</div>
+                    <div class="stat-value"><span th:text="${attendancePercent}">0</span>%</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="stat-tile">
+                <div class="stat-icon ic-orange">⏳</div>
+                <div>
+                    <div class="stat-label">Fee Pending</div>
+                    <div class="stat-value">₹ <span th:text="${#numbers.formatDecimal(fee.pending,1,'COMMA',0,'POINT')}">0</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+
+        <!-- Attendance chart -->
+        <div class="col-lg-5">
+            <div class="soft-card">
+                <div class="card-title-row"><h5>📊 My Attendance</h5></div>
+                <div class="card-pad text-center">
+                    <div th:if="${presentCount + absentCount > 0}">
+                        <canvas id="attChart" style="max-height:230px;"></canvas>
+                    </div>
+                    <div class="empty-note" th:if="${presentCount + absentCount == 0}">
+                        No attendance has been marked yet.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fee card -->
+        <div class="col-lg-7">
+            <div class="soft-card">
+                <div class="card-title-row">
+                    <h5>💳 My Fees</h5>
+                    <span class="badge" th:classappend="${fee.badgeClass}" th:text="${fee.statusLabel}"></span>
+                </div>
+                <div class="card-pad">
+
+                    <div th:if="${fee.status == 'NOT_SET'}" class="empty-note">
+                        Your fee has not been set by the office yet.
+                    </div>
+
+                    <div th:unless="${fee.status == 'NOT_SET'}">
+                        <div class="row text-center mb-3">
+                            <div class="col-4">
+                                <div class="stat-label">Payable</div>
+                                <div class="fw-bold fs-5">₹ <span th:text="${#numbers.formatDecimal(fee.payable,1,'COMMA',2,'POINT')}"></span></div>
+                            </div>
+                            <div class="col-4">
+                                <div class="stat-label">Paid</div>
+                                <div class="fw-bold fs-5 text-success">₹ <span th:text="${#numbers.formatDecimal(fee.paid,1,'COMMA',2,'POINT')}"></span></div>
+                            </div>
+                            <div class="col-4">
+                                <div class="stat-label">Pending</div>
+                                <div class="fw-bold fs-5 text-danger">₹ <span th:text="${#numbers.formatDecimal(fee.pending,1,'COMMA',2,'POINT')}"></span></div>
+                            </div>
+                        </div>
+
+                        <div class="progress fee-progress mb-1">
+                            <div class="progress-bar bg-success" role="progressbar"
+                                 th:style="'width:' + ${fee.percentPaid} + '%'"></div>
+                        </div>
+                        <small class="text-muted"><span th:text="${fee.percentPaid}"></span>% paid</small>
+                        <small class="ms-3" th:if="${fee.dueDate != null}"
+                               th:classappend="${fee.overdue} ? 'text-danger fw-bold' : 'text-muted'"
+                               th:text="'Due: ' + ${#temporals.format(fee.dueDate,'dd MMM yyyy')} + (${fee.overdue} ? ' (overdue)' : '')"></small>
+
+                        <hr>
+                        <div class="fw-semibold mb-1">Recent Payments</div>
+                        <div class="list-row" th:each="p : ${payments}">
+                            <div>
+                                <div th:text="${p.receiptNumber}"></div>
+                                <small class="text-muted"
+                                       th:text="${#temporals.format(p.paymentDate,'dd MMM yyyy')} + ' · ' + ${p.paymentMode}"></small>
+                            </div>
+                            <span class="fw-bold text-success" th:text="'₹ ' + ${#numbers.formatDecimal(p.amountPaid,1,'COMMA',2,'POINT')}"></span>
+                        </div>
+                        <div class="empty-note" th:if="${#lists.isEmpty(payments)}">No payments yet.</div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-lg-5">
+            <div class="soft-card">
+                <div class="card-title-row"><h5>🕘 Today's Lectures</h5>
+                    <span class="badge bg-primary" th:if="${myClass != null}" th:text="'Class ' + ${myClass.className}"></span></div>
+                <div class="card-pad">
+                    <div th:if="${myClass == null}" class="empty-note">You are not added to a class yet.</div>
+                    <div th:if="${myClass != null}">
+                        <div class="lecture-row" th:each="l : ${todayLectures}">
+                            <span class="time-chip" th:text="${#temporals.format(l.startTime,'HH:mm')} + ' - ' + ${#temporals.format(l.endTime,'HH:mm')}"></span>
+                            <div><div class="fw-semibold" th:text="${l.subject.subjectName}"></div>
+                                <small class="text-muted" th:text="${l.subject.teacher.fullName} + (${l.room != null} ? ' · Room ' + ${l.room} : '')"></small></div>
+                        </div>
+                        <div class="empty-note" th:if="${#lists.isEmpty(todayLectures)}">No lectures today 🎉</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-7">
+            <div class="soft-card">
+                <div class="card-title-row"><h5>🗓 Weekly Timetable</h5></div>
+                <div class="card-pad">
+                    <div th:if="${myClass != null}">
+                        <div class="lecture-row" th:each="l : ${timetable}">
+                            <span class="day-chip" th:text="${l.dayOfWeek}"></span>
+                            <span class="time-chip" th:text="${#temporals.format(l.startTime,'HH:mm')} + ' - ' + ${#temporals.format(l.endTime,'HH:mm')}"></span>
+                            <span class="fw-semibold" th:text="${l.subject.subjectName}"></span>
+                        </div>
+                        <div class="empty-note" th:if="${#lists.isEmpty(timetable)}">Timetable not published yet.</div>
+                    </div>
+                    <div th:if="${myClass == null}" class="empty-note">No class assigned.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+
+        <!-- Recent attendance -->
+        <div class="col-lg-7">
+            <div class="soft-card">
+                <div class="card-title-row"><h5>🗓 Recent Attendance</h5></div>
+                <div class="card-pad">
+                    <div class="list-row" th:each="a : ${recentAttendance}">
+                        <div>
+                            <div class="fw-semibold" th:text="${a.subject.subjectName}"></div>
+                            <small class="text-muted" th:text="${#temporals.format(a.attendanceDate,'dd MMM yyyy')}"></small>
+                        </div>
+                        <span class="badge"
+                              th:classappend="${a.status.name() == 'PRESENT'} ? 'bg-success' : 'bg-danger'"
+                              th:text="${a.status}"></span>
+                    </div>
+                    <div class="empty-note" th:if="${#lists.isEmpty(recentAttendance)}">Nothing to show yet.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notifications -->
+        <div class="col-lg-5">
+            <div class="soft-card">
+                <div class="card-title-row"><h5>🔔 Notifications</h5></div>
+                <div class="card-pad">
+                    <div class="list-row" th:each="n : ${notifications}">
+                        <div>
+                            <div th:text="${n.message}"></div>
+                            <small class="text-muted" th:text="${#temporals.format(n.createdAt,'dd MMM yyyy, hh:mm a')}"></small>
+                        </div>
+                    </div>
+                    <div class="empty-note" th:if="${#lists.isEmpty(notifications)}">You are all caught up 🎉</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script th:inline="javascript">
+/*<![CDATA[*/
+    var present = /*[[${presentCount}]]*/ 0;
+    var absent  = /*[[${absentCount}]]*/ 0;
+    var canvas = document.getElementById('attChart');
+    if (canvas) {
+        new Chart(canvas.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Present', 'Absent'],
+                datasets: [{ data: [present, absent], backgroundColor: ['#198754', '#dc3545'], borderWidth: 0 }]
+            },
+            options: { cutout: '68%', plugins: { legend: { position: 'bottom' } } }
+        });
+    }
+/*]]>*/
+</script>
+
+</body>
+</html>

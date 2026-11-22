@@ -1,10 +1,14 @@
 package com.sanskaracademy.repository;
 
-import com.sanskaracademy.entity.User;
-import org.springframework.data.jpa.repository.*;
-import org.springframework.data.repository.query.Param;
-
 import java.util.List;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.sanskaracademy.entity.User;
 
 public interface StudentParentRepository extends JpaRepository<User, Long> {
 
@@ -21,4 +25,17 @@ public interface StudentParentRepository extends JpaRepository<User, Long> {
         WHERE sp.parent_id = :parentId
     """, nativeQuery = true)
     List<User> findStudentsByParent(@Param("parentId") Long parentId);
+
+    // NEW - used by the admin "Parent links" tab
+    @Modifying
+    @Transactional
+    @Query(value = "INSERT INTO student_parent (student_id, parent_id) VALUES (:studentId, :parentId)",
+           nativeQuery = true)
+    void link(@Param("studentId") Long studentId, @Param("parentId") Long parentId);
+
+    @Modifying
+    @Transactional
+    @Query(value = "DELETE FROM student_parent WHERE student_id = :studentId AND parent_id = :parentId",
+           nativeQuery = true)
+    void unlink(@Param("studentId") Long studentId, @Param("parentId") Long parentId);
 }

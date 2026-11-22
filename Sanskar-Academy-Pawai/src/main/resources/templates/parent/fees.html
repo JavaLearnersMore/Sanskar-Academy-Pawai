@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Pay Fees | Sanskar Academy</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link th:href="@{/css/portal.css}" rel="stylesheet">
+</head>
+<body class="portal-body">
+
+<div th:replace="~{fragments/header :: header}"></div>
+<div th:replace="~{fragments/portal-nav :: nav('fees')}"></div>
+
+<div class="portal-wrap">
+    <h3 class="mb-3">💳 Pay Fees</h3>
+
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+    <div class="soft-card mb-4" th:if="${#lists.isEmpty(fees)}">
+        <div class="card-pad"><div class="empty-note">No child is linked to your account yet.</div></div>
+    </div>
+
+    <div class="soft-card mb-4" th:each="f : ${fees}">
+        <div class="card-title-row">
+            <h5 th:text="${f.studentName}"></h5>
+            <span class="badge" th:classappend="${f.badgeClass}" th:text="${f.statusLabel}"></span>
+        </div>
+        <div class="card-pad">
+            <div th:if="${f.status == 'NOT_SET'}" class="empty-note">The academy has not set the fee yet.</div>
+
+            <div th:unless="${f.status == 'NOT_SET'}">
+                <div class="row text-center mb-3">
+                    <div class="col-4"><div class="stat-label">Payable</div><div class="fw-bold fs-5" th:text="'₹ ' + ${#numbers.formatDecimal(f.payable,1,'COMMA',2,'POINT')}"></div></div>
+                    <div class="col-4"><div class="stat-label">Paid</div><div class="fw-bold fs-5 text-success" th:text="'₹ ' + ${#numbers.formatDecimal(f.paid,1,'COMMA',2,'POINT')}"></div></div>
+                    <div class="col-4"><div class="stat-label">Pending</div><div class="fw-bold fs-5 text-danger" th:text="'₹ ' + ${#numbers.formatDecimal(f.pending,1,'COMMA',2,'POINT')}"></div></div>
+                </div>
+                <div class="progress fee-progress mb-3"><div class="progress-bar bg-success" th:style="'width:' + ${f.percentPaid} + '%'"></div></div>
+                <small class="text-muted d-block mb-3" th:if="${f.dueDate != null}"
+                       th:text="'Due date: ' + ${#temporals.format(f.dueDate,'dd MMM yyyy')}"></small>
+
+                <form th:if="${f.pending.signum() > 0}" th:action="@{/parent/fees/pay}" method="post" class="row g-2 align-items-end mb-4">
+                    <input type="hidden" name="studentId" th:value="${f.studentId}">
+                    <div class="col-md-4"><label class="form-label">Amount (₹)</label>
+                        <input type="number" step="0.01" min="0.01" th:max="${f.pending}" name="amount" th:value="${f.pending}" class="form-control" required></div>
+                    <div class="col-md-4"><label class="form-label">Pay using</label>
+                        <select name="paymentMode" class="form-select">
+                            <option th:each="m : ${onlineModes}" th:value="${m}" th:text="${m}"></option>
+                        </select></div>
+                    <div class="col-md-4"><button class="btn btn-success w-100">Pay Now</button></div>
+                </form>
+                <div class="alert alert-success py-2" th:if="${f.pending.signum() == 0}">All fees are paid. Thank you!</div>
+
+                <div class="fw-semibold mb-1">Payment history</div>
+                <div class="list-row" th:each="p : ${payments.get(f.studentId)}">
+                    <div><div th:text="${p.receiptNumber}"></div>
+                        <small class="text-muted" th:text="${#temporals.format(p.paymentDate,'dd MMM yyyy')} + ' · ' + ${p.paymentMode}"></small></div>
+                    <div class="text-end"><span class="fw-bold text-success" th:text="'₹ ' + ${#numbers.formatDecimal(p.amountPaid,1,'COMMA',2,'POINT')}"></span>
+                        <a class="btn btn-sm btn-outline-primary ms-2" th:href="@{/parent/fees/receipt/{id}(id=${p.id})}">🖨</a></div>
+                </div>
+                <div class="empty-note" th:if="${#lists.isEmpty(payments.get(f.studentId))}">No payments yet.</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

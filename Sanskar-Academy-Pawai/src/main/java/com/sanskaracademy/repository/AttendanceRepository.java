@@ -29,4 +29,10 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
         WHERE a.student.id = :studentId
     """)
     List<Attendance> findWithSubjectByStudent(@Param("studentId") Long studentId);
+
+    // teacher dashboard
+    long countByMarkedByIdAndAttendanceDate(Long teacherId, LocalDate date);
+
+    // teacher attendance screen
+    List<Attendance> findBySubjectIdAndAttendanceDate(Long subjectId, LocalDate date);
 }

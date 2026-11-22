@@ -40,6 +40,10 @@ public class User {
     @Column(name = "totp_secret")
     private String totpSecret;
 
+    /** false = authenticator not set up yet; null = old account (already set up) */
+    @Column(name = "totp_setup_done")
+    private Boolean totpSetupDone;
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "role_id", nullable = false)
     private Role role;

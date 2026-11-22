@@ -1,0 +1,34 @@
+<!-- Read-only leave table. Usage: <div th:replace="~{fragments/leave-parts :: leaveTable(${leaves})}"></div> -->
+<div th:fragment="leaveTable(leaves)">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+            <tr>
+                <th>For</th><th>From</th><th>To</th><th>Days</th><th>Reason</th><th>Status</th><th>Remarks</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="l : ${leaves}">
+                <td>
+                    <div class="fw-semibold" th:text="${l.personName}"></div>
+                    <small class="text-muted"
+                           th:text="'Applied ' + ${#temporals.format(l.appliedAt,'dd MMM yyyy')} + ' by ' + ${l.applicantRole}"></small>
+                </td>
+                <td th:text="${#temporals.format(l.fromDate,'dd MMM yyyy')}"></td>
+                <td th:text="${#temporals.format(l.toDate,'dd MMM yyyy')}"></td>
+                <td th:text="${l.days}"></td>
+                <td th:text="${l.reason}" style="max-width:260px;"></td>
+                <td><span class="badge" th:classappend="${l.badgeClass}" th:text="${l.status}"></span></td>
+                <td>
+                    <span th:text="${l.reviewRemarks}"></span>
+                    <small class="text-muted d-block" th:if="${l.reviewedBy != null}"
+                           th:text="'by ' + ${l.reviewedBy.fullName}"></small>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(leaves)}">
+                <td colspan="7" class="text-center text-muted py-4">No leave requests yet</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>

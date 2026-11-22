@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Teacher Dashboard | Sanskar Academy</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link th:href="@{/css/portal.css}" rel="stylesheet">
+</head>
+<body class="portal-body">
+
+<div th:replace="~{fragments/header :: header}"></div>
+<div th:replace="~{fragments/portal-nav :: nav('dashboard')}"></div>
+
+<div class="portal-wrap">
+
+    <div class="hero mb-4">
+        <span class="date-chip" th:text="${#temporals.format(today,'EEEE, dd MMMM yyyy')}"></span>
+        <h2>Welcome back, <span th:text="${teacher.fullName}">Teacher</span> 👋</h2>
+        <p class="sub">Here is a quick look at your classes today.</p>
+    </div>
+
+    <div class="alert-tile mb-4" th:if="${pendingStudentLeaves > 0}">
+        📝 You have <strong th:text="${pendingStudentLeaves}"></strong> student leave request(s) waiting.
+        <a th:href="@{/teacher/leave}">Review now</a>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-lg-3"><div class="stat-tile"><div class="stat-icon ic-blue">📚</div>
+            <div><div class="stat-label">My Subjects</div><div class="stat-value" th:text="${subjectCount}">0</div></div></div></div>
+        <div class="col-6 col-lg-3"><div class="stat-tile"><div class="stat-icon ic-green">🏫</div>
+            <div><div class="stat-label">My Classes</div><div class="stat-value" th:text="${classCount}">0</div></div></div></div>
+        <div class="col-6 col-lg-3"><div class="stat-tile"><div class="stat-icon ic-orange">👨‍🎓</div>
+            <div><div class="stat-label">Total Students</div><div class="stat-value" th:text="${totalStudents}">0</div></div></div></div>
+        <div class="col-6 col-lg-3"><div class="stat-tile"><div class="stat-icon ic-purple">✅</div>
+            <div><div class="stat-label">Marked Today</div><div class="stat-value" th:text="${markedToday}">0</div></div></div></div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-lg-6">
+            <div class="soft-card">
+                <div class="card-title-row"><h5>🕘 Today's Lectures</h5>
+                    <a class="btn btn-sm btn-primary" th:href="@{/teacher/attendance}">Take Attendance</a></div>
+                <div class="card-pad">
+                    <div class="lecture-row" th:each="l : ${todayLectures}">
+                        <span class="time-chip" th:text="${#temporals.format(l.startTime,'HH:mm')} + ' - ' + ${#temporals.format(l.endTime,'HH:mm')}"></span>
+                        <div class="flex-grow-1">
+                            <div class="fw-semibold" th:text="${l.subject.subjectName}"></div>
+                            <small class="text-muted" th:text="'Class ' + ${l.subject.classEntity.className} + (${l.room != null} ? ' · Room ' + ${l.room} : '')"></small>
+                        </div>
+                        <a class="btn btn-sm btn-outline-primary" th:href="@{/teacher/attendance(subjectId=${l.subject.id})}">Mark</a>
+                    </div>
+                    <div class="empty-note" th:if="${#lists.isEmpty(todayLectures)}">No lectures today 🎉</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="soft-card">
+                <div class="card-title-row"><h5>📚 My Subjects</h5></div>
+                <div class="card-pad">
+                    <div class="row g-3">
+                        <div class="col-md-6" th:each="s, st : ${subjects}">
+                            <div class="subject-card" th:classappend="'sc-' + ${st.index % 4}">
+                                <div class="fw-bold fs-5" th:text="${s.subjectName}"></div>
+                                <small th:text="'Class: ' + ${s.classEntity.className}"></small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="empty-note" th:if="${#lists.isEmpty(subjects)}">No subjects are assigned to you yet.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-lg-7">
+            <div class="soft-card">
+                <div class="card-title-row"><h5>🗓 My Weekly Timetable</h5></div>
+                <div class="card-pad">
+                    <div class="lecture-row" th:each="l : ${timetable}">
+                        <span class="day-chip" th:text="${l.dayOfWeek}"></span>
+                        <span class="time-chip" th:text="${#temporals.format(l.startTime,'HH:mm')} + ' - ' + ${#temporals.format(l.endTime,'HH:mm')}"></span>
+                        <div><span class="fw-semibold" th:text="${l.subject.subjectName}"></span>
+                            <small class="text-muted" th:text="' · ' + ${l.subject.classEntity.className}"></small></div>
+                    </div>
+                    <div class="empty-note" th:if="${#lists.isEmpty(timetable)}">No lectures scheduled yet.</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="soft-card">
+                <div class="card-title-row"><h5>💼 My Salary</h5></div>
+                <div class="card-pad">
+                    <div class="list-row" th:each="s : ${salaries}">
+                        <div><div class="fw-semibold" th:text="${s.periodLabel}"></div>
+                            <small class="text-muted" th:text="${s.slipNumber}"></small></div>
+                        <span class="fw-bold text-success" th:text="'₹ ' + ${#numbers.formatDecimal(s.netAmount,1,'COMMA',2,'POINT')}"></span>
+                    </div>
+                    <div class="empty-note" th:if="${#lists.isEmpty(salaries)}">No salary records yet.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

@@ -5,54 +5,20 @@
 <div th:fragment="sidebar">
     <div class="bg-dark text-white vh-100 p-3">
 
-        <h5 class="fw-bold text-start mb-4 ms-2">
-            Admin Panel
-        </h5>
+        <h5 class="fw-bold text-start mb-4 ms-2">Admin Panel</h5>
 
         <ul class="nav flex-column">
-
-            <li class="nav-item mb-2">
-                <a class="nav-link text-white"
-                   th:href="@{/admin/dashboard}">
-                    📊 Dashboard
-                </a>
-            </li>
-
-            <li class="nav-item mb-2">
-                <a class="nav-link text-white"
-                   th:href="@{/admin/students}">
-                    👨‍🎓 Students
-                </a>
-            </li>
-
-            <li class="nav-item mb-2">
-                <a class="nav-link text-white"
-                   th:href="@{/admin/teachers}">
-                    👨‍🏫 Teachers
-                </a>
-            </li>
-
-            <li class="nav-item mb-2">
-                <a class="nav-link text-white"
-                   th:href="@{/admin/finance}">
-                    💰 Finance
-                </a>
-            </li>
-            
-            <li class="nav-item mb-2">
-                <a class="nav-link text-white"
-                   th:href="@{/admin/expenses}">
-                   💸 Expenses
-                </a>
-            </li>
-
-            <li class="nav-item mb-2">
-                <a class="nav-link text-white"
-                   th:href="@{/admin/settings}">
-                    ⚙ Settings
-                </a>
-            </li>
-
+            <li class="nav-item mb-2"><a class="nav-link text-white" th:href="@{/admin/dashboard}">📊 Dashboard</a></li>
+            <li class="nav-item mb-2"><a class="nav-link text-white" th:href="@{/admin/students}">👨‍🎓 Students</a></li>
+            <li class="nav-item mb-2"><a class="nav-link text-white" th:href="@{/admin/teachers}">👨‍🏫 Teachers</a></li>
+            <li class="nav-item mb-2"><a class="nav-link text-white" th:href="@{/admin/academics}">📚 Classes &amp; Timetable</a></li>
+            <li class="nav-item mb-2"><a class="nav-link text-white" th:href="@{/admin/fees}">🧾 Student Fees</a></li>
+            <li class="nav-item mb-2"><a class="nav-link text-white" th:href="@{/admin/staff}">🧑‍💼 Staff &amp; HR</a></li>
+            <li class="nav-item mb-2"><a class="nav-link text-white" th:href="@{/admin/salaries}">💼 Teacher Salary</a></li>
+            <li class="nav-item mb-2"><a class="nav-link text-white" th:href="@{/admin/leaves}">📝 Leave Requests</a></li>
+            <li class="nav-item mb-2"><a class="nav-link text-white" th:href="@{/admin/finance}">💰 Finance</a></li>
+            <li class="nav-item mb-2"><a class="nav-link text-white" th:href="@{/admin/expenses}">💸 Expenses</a></li>
+            <li class="nav-item mb-2"><a class="nav-link text-white" th:href="@{/admin/settings}">⚙ Settings</a></li>
         </ul>
     </div>
 </div>

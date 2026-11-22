@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
 
 <title>System Settings</title>
@@ -65,7 +65,7 @@ View Pending Users
 
 <h5>Change Password</h5>
 
-<a th:href="@{/admin/change-password}" class="btn btn-warning mt-3">
+<a th:href="@{/account}" class="btn btn-warning mt-3">
 Update Password
 </a>
 
@@ -79,7 +79,7 @@ Update Password
 
 <h5>2FA Settings</h5>
 
-<a th:href="@{/admin/regenerate-qr}" class="btn btn-success mt-3">
+<a th:href="@{/account}" class="btn btn-success mt-3">
 Regenerate QR
 </a>
 
@@ -89,6 +89,28 @@ Regenerate QR
 
 </div>
 
+</div>
+
+<div class="card shadow mt-4 p-4" style="border-radius:15px">
+<h5>Reset a user's authenticator (lost phone)</h5>
+<p class="small text-muted mb-3">The user's old key stops working. At the next login the user sees a new QR code and scans it.</p>
+<div th:if="${param.reset}" class="alert alert-success">Authenticator reset. Ask the user to log in again.</div>
+<div class="table-responsive">
+<table class="table table-sm align-middle mb-0">
+<thead class="table-light"><tr><th>Name</th><th>Username</th><th>Role</th><th></th></tr></thead>
+<tbody>
+<tr th:each="u : ${allUsers}">
+<td th:text="${u.fullName}"></td>
+<td th:text="${u.username}"></td>
+<td th:text="${u.role.name}"></td>
+<td class="text-end">
+<form th:action="@{/admin/regenerate-secret/{n}(n=${u.username})}" method="post" class="m-0"
+      onsubmit="return confirm('Reset the authenticator of this user?');">
+<button class="btn btn-sm btn-outline-success">Reset 2FA</button></form>
+</td>
+</tr>
+</tbody></table>
+</div>
 </div>
 
 </div>

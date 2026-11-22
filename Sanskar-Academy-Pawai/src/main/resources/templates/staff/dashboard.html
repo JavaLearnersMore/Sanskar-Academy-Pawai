@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <title>Staff Dashboard | Sanskar Academy</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link th:href="@{/css/portal.css}" rel="stylesheet">
+    <style> body { background-color: #f4f6f9; } .card { border-radius: 12px; } </style>
+</head>
+<body>
+<div th:replace="~{fragments/header :: header}"></div>
+<div th:replace="~{fragments/portal-nav :: nav('dashboard')}"></div>
+<div class="container py-4" style="max-width:1000px">
+        <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+        <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+        <div th:if="${staff == null}" class="alert alert-warning">You are not in the staff list yet. Please ask the admin to add you under <b>Staff</b>.</div>
+
+<div th:if="${staff != null}">
+    <h3 class="mb-3">&#127968; My Attendance</h3>
+    <form th:action="@{/staff/dashboard}" method="get" class="row g-2 mb-3">
+        <div class="col-auto"><select name="month" class="form-select">
+            <option th:each="m : ${#numbers.sequence(1,12)}" th:value="${m}" th:selected="${m == month}" th:text="${T(java.time.Month).of(m).getDisplayName(T(java.time.format.TextStyle).FULL, T(java.util.Locale).ENGLISH)}"></option></select></div>
+        <div class="col-auto"><input type="number" name="year" class="form-control" th:value="${year}" min="2020" max="2100"></div>
+        <div class="col-auto"><button class="btn btn-outline-primary">Show</button></div>
+    </form>
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3"><div class="card shadow-sm text-center p-3"><div class="fs-3 text-success" th:text="${present}"></div>Present</div></div>
+        <div class="col-6 col-md-3"><div class="card shadow-sm text-center p-3"><div class="fs-3 text-danger" th:text="${absent}"></div>Absent</div></div>
+        <div class="col-6 col-md-3"><div class="card shadow-sm text-center p-3"><div class="fs-3 text-warning" th:text="${half}"></div>Half days</div></div>
+        <div class="col-6 col-md-3"><div class="card shadow-sm text-center p-3"><div class="fs-3 text-primary" th:text="${leave}"></div>On leave</div></div>
+    </div>
+    <div class="alert alert-info">
+        Rule: <b th:text="${paidLeave}">2</b> days per month are paid (absent + leave + half days counted). Extra days are cut from salary.
+        This month used: <b th:text="${absent + leave + (half * 0.5)}"></b> day(s).
+        Weekly off: <b th:text="${#strings.setJoin(offDays, ', ')}">-</b>
+    </div>
+    <div class="row g-4">
+        <div class="col-lg-7"><div class="card shadow-sm"><div class="card-body">
+            <h5>Marked days</h5>
+            <table class="table table-sm"><thead><tr><th>Date</th><th>Status</th><th>Remark</th></tr></thead><tbody>
+            <tr th:each="a : ${att}"><td th:text="${#temporals.format(a.attDate,'EEE dd MMM')}"></td>
+                <td><span class="badge" th:classappend="${a.status.name() == 'PRESENT'} ? 'bg-success' : (${a.status.name() == 'ABSENT'} ? 'bg-danger' : (${a.status.name() == 'HALF_DAY'} ? 'bg-warning text-dark' : 'bg-primary'))" th:text="${a.status}"></span></td>
+                <td th:text="${a.remark}"></td></tr>
+            <tr th:if="${#lists.isEmpty(att)}"><td colspan="3" class="text-muted text-center">Nothing marked this month</td></tr>
+            </tbody></table></div></div></div>
+        <div class="col-lg-5"><div class="card shadow-sm"><div class="card-body">
+            <h5>Upcoming holidays</h5>
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item" th:each="h : ${holidays}" th:text="${#temporals.format(h.holidayDate,'EEE dd MMM yyyy')} + ' - ' + ${h.name}"></li>
+                <li class="list-group-item text-muted" th:if="${#lists.isEmpty(holidays)}">None added</li>
+            </ul></div></div></div>
+    </div>
+</div>
+
+</div>
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

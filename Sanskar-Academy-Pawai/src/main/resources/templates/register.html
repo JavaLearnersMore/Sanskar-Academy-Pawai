@@ -34,6 +34,7 @@
             🎓 Create Account
         </h3>
 
+        <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
         <form th:action="@{/register}" th:object="${registerDto}" method="post">
 
             <div class="mb-3">

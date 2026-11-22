@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <title>Exam results | Sanskar Academy</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link th:href="@{/css/portal.css}" rel="stylesheet">
+</head>
+<body class="portal-body">
+<div th:replace="~{fragments/header :: header}"></div>
+<div th:replace="~{fragments/portal-nav :: nav('exams')}"></div>
+<div class="portal-wrap">
+<div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+<div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+<a th:href="@{/teacher/exams}" class="small">← All exams</a>
+<div class="d-flex flex-wrap justify-content-between align-items-center my-2 gap-2">
+  <div><h3 class="mb-0" th:text="${exam.title}"></h3>
+    <span class="text-muted" th:text="${exam.subject.subjectName} + ' · ' + ${exam.subject.classEntity.className}"></span>
+    <span class="badge ms-2" th:classappend="${exam.statusBadge}" th:text="${exam.status}"></span></div>
+  <a class="btn btn-outline-dark" th:href="@{/teacher/exams/{id}/monitor(id=${exam.id})}">👀 Live monitor</a>
+  <form th:if="${exam.status.name() == 'PUBLISHED'}" th:action="@{/teacher/exams/{id}/close(id=${exam.id})}" method="post"
+        onsubmit="return confirm('Close the exam? Students can no longer start it.');">
+    <button class="btn btn-outline-danger">Close exam</button></form>
+</div>
+
+<div class="row g-3 my-2">
+  <div class="col-6 col-md-3"><div class="stat-tile"><div class="stat-icon ic-blue">👥</div>
+    <div><div class="fw-bold fs-4" th:text="${stats.attempted} + ' / ' + ${stats.enrolled}"></div><small class="text-muted">Attempted</small></div></div></div>
+  <div class="col-6 col-md-3"><div class="stat-tile"><div class="stat-icon ic-green">📈</div>
+    <div><div class="fw-bold fs-4" th:text="${stats.average} + '%'"></div><small class="text-muted">Class average</small></div></div></div>
+  <div class="col-6 col-md-3"><div class="stat-tile"><div class="stat-icon ic-orange">🏆</div>
+    <div><div class="fw-bold fs-4" th:text="${stats.highest} + '% / ' + ${stats.lowest} + '%'"></div><small class="text-muted">Highest / Lowest</small></div></div></div>
+  <div class="col-6 col-md-3"><div class="stat-tile"><div class="stat-icon ic-purple">✅</div>
+    <div><div class="fw-bold fs-4" th:text="${stats.passed}"></div><small class="text-muted">Passed (≥40%)</small></div></div></div>
+</div>
+
+<div class="row g-4 mt-1">
+  <div class="col-lg-7">
+    <div class="soft-card"><div class="card-title-row"><h5>Submissions</h5></div>
+      <div class="card-pad"><div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light"><tr><th>Student</th><th>Score</th><th>Grade</th><th>Submitted</th><th>Warnings</th><th></th></tr></thead>
+          <tbody>
+            <tr th:each="a : ${attempts}">
+              <td th:text="${a.student.fullName}"></td>
+              <td th:text="${a.pending} ? 'Pending' : ${a.score} + '/' + ${a.totalMarks} + ' (' + ${a.percentage} + '%)'"></td>
+              <td><span class="badge" th:classappend="${a.badgeClass}" th:text="${a.pending} ? 'Review' : ${a.grade}"></span></td>
+              <td th:text="${a.submittedAt != null} ? ${#temporals.format(a.submittedAt,'dd MMM HH:mm')} : '-'"></td>
+              <td><span class="badge" th:classappend="${@examGuardService.violationsOf(a.id) == 0} ? 'bg-light text-dark border' : 'bg-danger'" th:text="${@examGuardService.violationsOf(a.id)}"></span>
+                <span th:if="${@examGuardService.autoSubmitted(a.id)}" class="badge bg-dark">auto</span></td>
+              <td><a class="btn btn-sm btn-outline-primary" th:href="@{/teacher/exams/attempts/{id}(id=${a.id})}">View answers</a></td>
+            </tr>
+          </tbody></table></div>
+        <div class="empty-note" th:if="${#lists.isEmpty(attempts)}">No submissions yet.</div>
+      </div></div>
+  </div>
+  <div class="col-lg-5">
+    <div class="soft-card"><div class="card-title-row"><h5>Which questions were hard?</h5></div>
+      <div class="card-pad">
+        <div class="mb-3" th:each="qs : ${stats.questionStats}">
+          <div class="d-flex justify-content-between small">
+            <span th:text="'Q' + ${qs.number} + '. ' + ${#strings.abbreviate(qs.text, 55)}"></span>
+            <b th:text="${qs.percent} + '%'"></b></div>
+          <div class="progress" style="height:10px"><div class="progress-bar" th:classappend="${qs.barClass}" th:style="'width:' + ${qs.percent} + '%'"></div></div>
+        </div>
+        <div class="empty-note" th:if="${#lists.isEmpty(stats.questionStats)}">Not enough data.</div>
+      </div></div>
+  </div>
+</div>
+</div>
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

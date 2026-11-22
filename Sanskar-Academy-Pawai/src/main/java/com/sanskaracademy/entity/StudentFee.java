@@ -13,6 +13,7 @@ import jakarta.persistence.ManyToOne;
 import lombok.Getter;
 import lombok.Setter;
 
+/** One fee payment (installment) made by a student. */
 @Entity
 @Getter @Setter
 public class StudentFee {
@@ -23,6 +24,7 @@ public class StudentFee {
     @ManyToOne
     private User student;
 
+    // kept for backward compatibility - not required by the new fee module
     @ManyToOne
     private FeeStructure feeStructure;
 
@@ -33,4 +35,7 @@ public class StudentFee {
     private PaymentMode paymentMode;
 
     private String receiptNumber;
+
+    // NEW
+    private String remarks;
 }

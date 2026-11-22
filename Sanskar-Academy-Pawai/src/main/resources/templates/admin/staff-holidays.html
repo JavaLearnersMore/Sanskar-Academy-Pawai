@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <title>Holidays | Sanskar Academy</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link th:href="@{/css/portal.css}" rel="stylesheet">
+    <style> body { background-color: #f4f6f9; } .card { border-radius: 12px; } </style>
+</head>
+<body>
+<div th:replace="~{fragments/header :: header}"></div>
+<div class="container-fluid"><div class="row">
+    <div class="col-md-2 p-0"><div th:replace="~{fragments/sidebar :: sidebar}"></div></div>
+    <div class="col-md-10 p-4">
+        <h3 class="mb-3">Holidays</h3>
+        <div th:replace="~{fragments/staff-tabs :: tabs('holidays')}"></div>
+        <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+        <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+        <div class="row g-4"><div class="col-lg-4">
+            <div class="card shadow-sm"><div class="card-body">
+                <h5>Add holiday</h5>
+                <form th:action="@{/admin/staff/holidays}" method="post">
+                    <div class="mb-2"><label class="form-label">Date</label><input type="date" name="date" class="form-control" required></div>
+                    <div class="mb-2"><label class="form-label">Name</label><input name="name" maxlength="100" class="form-control" placeholder="Diwali, Republic Day..." required></div>
+                    <div class="form-check mb-3"><input class="form-check-input" type="checkbox" name="wishes" value="true" id="w">
+                        <label class="form-check-label" for="w">Send festival wishes that morning (to people who opted in)</label></div>
+                    <button class="btn btn-success w-100">Add holiday</button>
+                </form></div></div>
+        </div><div class="col-lg-8">
+            <div class="card shadow-sm"><div class="card-body">
+                <h5>Holiday list</h5>
+                <table class="table align-middle"><thead class="table-light"><tr><th>Date</th><th>Name</th><th>Wishes</th><th></th></tr></thead>
+                <tbody>
+                <tr th:each="h : ${holidays}">
+                    <td th:text="${#temporals.format(h.holidayDate,'EEE, dd MMM yyyy')}"></td><td th:text="${h.name}"></td>
+                    <td th:text="${h.sendWishes} ? 'Yes' : '-'"></td>
+                    <td><form th:action="@{/admin/staff/holidays/{id}/delete(id=${h.id})}" method="post" class="m-0"><button class="btn btn-sm btn-outline-danger">Remove</button></form></td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(holidays)}"><td colspan="4" class="text-center text-muted py-4">No holidays yet. Weekly offs are set per staff member.</td></tr>
+                </tbody></table>
+            </div></div>
+        </div></div>
+
+    </div></div></div>
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

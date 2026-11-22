@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <title>Results | Sanskar Academy</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link th:href="@{/css/portal.css}" rel="stylesheet">
+</head>
+<body class="portal-body">
+<div th:replace="~{fragments/header :: header}"></div>
+<div th:replace="~{fragments/portal-nav :: nav('results')}"></div>
+<div class="portal-wrap">
+<div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+<div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+<h3 class="mb-3">🎓 Exam Results</h3>
+<div class="soft-card mb-4" th:each="row : ${rows}">
+  <div class="card-title-row"><h5 th:text="${row.child.fullName}"></h5></div>
+  <div class="card-pad">
+    <a class="list-row text-decoration-none text-dark" th:each="r : ${row.attempts}" th:href="@{/parent/results/{id}(id=${r.id})}">
+      <div class="flex-grow-1"><div class="fw-semibold" th:text="${r.exam.title}"></div>
+        <small class="text-muted" th:text="${r.exam.subject.subjectName} + ' · ' + ${#temporals.format(r.submittedAt,'dd MMM yyyy')}"></small></div>
+      <span class="badge" th:classappend="${r.badgeClass}" th:text="${r.pending} ? 'Pending' : ${r.score} + '/' + ${r.totalMarks} + ' · ' + ${r.percentage} + '% · ' + ${r.grade}"></span>
+    </a>
+    <div class="empty-note" th:if="${#lists.isEmpty(row.attempts)}">No exam results yet.</div>
+  </div>
+</div>
+<div class="empty-note" th:if="${#lists.isEmpty(rows)}">No child is linked to your account.</div>
+</div>
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

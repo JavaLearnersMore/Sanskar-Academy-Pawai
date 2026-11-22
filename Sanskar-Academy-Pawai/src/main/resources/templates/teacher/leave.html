@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Leave | Sanskar Academy</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link th:href="@{/css/portal.css}" rel="stylesheet">
+</head>
+<body class="portal-body">
+
+<div th:replace="~{fragments/header :: header}"></div>
+<div th:replace="~{fragments/portal-nav :: nav('leave')}"></div>
+
+<div class="portal-wrap">
+
+    <h3 class="mb-3">📝 Leave</h3>
+
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-lg-4">
+            <div class="soft-card"><div class="card-title-row"><h5>Apply for my leave</h5></div>
+                <div class="card-pad">
+                    <form th:action="@{/teacher/leave/apply}" method="post">
+                        <div class="mb-3"><label class="form-label">From</label>
+                            <input type="date" name="fromDate" class="form-control" th:value="${today}" required></div>
+                        <div class="mb-3"><label class="form-label">To</label>
+                            <input type="date" name="toDate" class="form-control" th:value="${today}" required></div>
+                        <div class="mb-3"><label class="form-label">Reason</label>
+                            <textarea name="reason" class="form-control" rows="3" maxlength="500" required></textarea></div>
+                        <button class="btn btn-primary w-100">Send to Admin</button>
+                    </form>
+                </div></div>
+        </div>
+        <div class="col-lg-8">
+            <div class="soft-card"><div class="card-title-row"><h5>My leave requests</h5></div>
+                <div class="card-pad">
+                    <div th:replace="~{fragments/leave-parts :: leaveTable(${myLeaves})}"></div>
+                </div></div>
+        </div>
+    </div>
+
+    <div class="soft-card mb-4">
+        <div class="card-title-row"><h5>Student leave requests (your classes)</h5></div>
+        <div class="card-pad">
+            <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                <tr><th>Student</th><th>Dates</th><th>Days</th><th>Reason</th><th>Status</th><th style="min-width:260px;">Action</th></tr>
+                </thead>
+                <tbody>
+                <tr th:each="l : ${studentLeaves}">
+                    <td><div class="fw-semibold" th:text="${l.student.fullName}"></div>
+                        <small class="text-muted" th:text="'by ' + ${l.applicantRole}"></small></td>
+                    <td th:text="${#temporals.format(l.fromDate,'dd MMM')} + ' - ' + ${#temporals.format(l.toDate,'dd MMM yyyy')}"></td>
+                    <td th:text="${l.days}"></td>
+                    <td th:text="${l.reason}" style="max-width:240px;"></td>
+                    <td><span class="badge" th:classappend="${l.badgeClass}" th:text="${l.status}"></span></td>
+                    <td>
+                        <form th:if="${l.status.name() == 'PENDING'}" th:action="@{/teacher/leave/review/{id}(id=${l.id})}" method="post" class="d-flex gap-1 m-0">
+                            <input type="text" name="remarks" class="form-control form-control-sm" placeholder="Remarks" maxlength="300">
+                            <button name="action" value="APPROVE" class="btn btn-sm btn-success">✔</button>
+                            <button name="action" value="REJECT" class="btn btn-sm btn-danger">✖</button>
+                        </form>
+                        <span th:unless="${l.status.name() == 'PENDING'}" class="text-muted small" th:text="${l.reviewRemarks}"></span>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(studentLeaves)}"><td colspan="6" class="text-center text-muted py-4">No student leave requests</td></tr>
+                </tbody>
+            </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

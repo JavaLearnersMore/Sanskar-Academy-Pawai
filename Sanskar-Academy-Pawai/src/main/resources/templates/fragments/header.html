@@ -5,16 +5,23 @@
         <div class="container-fluid position-relative">
 
             <!-- Centered Title -->
-            <div class="position-absolute top-50 start-50 translate-middle text-white fw-bold fs-4">
+            <div class="position-absolute top-50 start-50 translate-middle text-white fw-bold fs-4 d-none d-md-block">
                 🎓 Sanskar Academy Classes
             </div>
+            <span class="navbar-brand fw-bold d-md-none">🎓 Sanskar Academy</span>
 
             <!-- Right Side -->
             <div class="ms-auto d-flex align-items-center">
-                <span class="text-white me-3">Welcome, Admin</span>
-                <a href="@{/logout}" class="btn btn-outline-light btn-sm">
-                    Logout
-                </a>
+                <span class="text-white me-3">
+                    Welcome, <span sec:authentication="name">User</span>
+                </span>
+
+                <a th:href="@{/account}" class="btn btn-outline-light btn-sm me-2" sec:authorize="isAuthenticated()">My Account</a>
+
+                <!-- Logout must be a POST (Spring Security 6 + CSRF) -->
+                <form th:action="@{/logout}" method="post" class="m-0">
+                    <button type="submit" class="btn btn-outline-light btn-sm">Logout</button>
+                </form>
             </div>
 
         </div>

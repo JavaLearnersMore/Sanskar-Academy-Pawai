@@ -31,9 +31,19 @@
 
         .login-image {
             width: 50%;
-            background: url('https://images.unsplash.com/photo-1588072432836-e10032774350')
-                        center/cover no-repeat;
+            /* To use your own school photo: put it in static/images/ and change this file name */
+            background: url('/images/login-school.svg') center/cover no-repeat;
+            position: relative;
         }
+
+        .login-image .caption {
+            position: absolute; left: 0; right: 0; top: 0;
+            padding: 24px 24px 60px; text-align: center; color: #fff;
+            background: linear-gradient(to bottom, rgba(0,33,71,.85), rgba(0,33,71,0));
+            font-family: 'Nirmala UI', 'Mangal', 'Noto Sans Devanagari', sans-serif;
+        }
+        .login-image .caption .mr { font-size: 1.5rem; font-weight: 700; }
+        .login-image .caption .sub { font-size: .95rem; opacity: .9; }
 
         .login-form {
             width: 50%;
@@ -79,7 +89,12 @@
 <div class="login-container">
 
     <!-- LEFT SIDE IMAGE -->
-    <div class="login-image"></div>
+    <div class="login-image">
+        <div class="caption">
+            <div class="mr">संस्कार अकॅडमी क्लासेस</div>
+            <div class="sub">शिका • घडा • पुढे चला</div>
+        </div>
+    </div>
 
     <!-- RIGHT SIDE LOGIN FORM -->
     <div class="login-form">
@@ -89,11 +104,35 @@
         </h2>
 
         <h5 class="mb-4">Welcome Back 👋</h5>
+        
+                <!-- Shown only when someone is already logged in -->
+        <div sec:authorize="isAuthenticated()" id="loggedBanner" class="alert alert-warning" style="display:none">
+            You are already logged in as
+            <strong id="loggedUser" sec:authentication="name">user</strong>.<br>
+            You do not need to log in again.
+            <div class="d-flex gap-2 mt-2">
+                <a th:href="@{/dashboard}" class="btn btn-sm btn-primary">Go to my dashboard</a>
+                <form th:action="@{/logout}" method="post" class="m-0">
+                    <button type="submit" class="btn btn-sm btn-outline-danger">Logout</button>
+                </form>
+            </div>
+        </div>
 
         <!-- Error Message -->
         <div th:if="${param.error}" class="alert alert-danger">
             Invalid username or password
         </div>
+
+        <div th:if="${param.pending}" class="alert alert-warning">
+            Your account is not active yet. Please verify your email and wait for the admin to approve it.
+            <a th:href="@{/resend-verification}">Resend verification email</a>
+        </div>
+
+        <div th:if="${param.resent}" class="alert alert-info">
+            If that email is registered and not verified yet, a new link has been sent.
+        </div>
+
+        <div th:if="${message}" class="alert alert-success" th:text="${message}"></div>
 
         <div th:if="${param.logout}" class="alert alert-success">
             You have been logged out successfully.
@@ -147,5 +186,21 @@
 
 </div>
 
+<script>
+// The "already logged in" notice appears only when the same user name is typed again.
+// A different user name simply logs in (it replaces the old login in this browser).
+(function () {
+    var banner = document.getElementById('loggedBanner');
+    var current = document.getElementById('loggedUser');
+    var input = document.querySelector('input[name="username"]');
+    if (!banner || !current || !input) return;
+    function check() {
+        var same = input.value.trim().toLowerCase() === current.textContent.trim().toLowerCase();
+        banner.style.display = same ? 'block' : 'none';
+    }
+    input.addEventListener('input', check);
+    check();
+})();
+</script>
 </body>
 </html>

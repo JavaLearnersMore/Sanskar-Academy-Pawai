@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!-- Score ring + summary. Usage: ~{fragments/result-parts :: scoreHeader(${attempt})} -->
+<div th:fragment="scoreHeader(attempt)" class="soft-card mb-4">
+    <div class="card-pad d-flex flex-wrap align-items-center gap-4">
+        <div class="score-ring" th:style="'--pct:' + ${attempt.pending ? 0 : attempt.percentage}">
+            <span th:text="${attempt.pending} ? '?' : ${attempt.percentage} + '%'"></span>
+        </div>
+        <div class="flex-grow-1">
+            <h4 class="mb-1" th:text="${attempt.exam.title}"></h4>
+            <div class="text-muted mb-2" th:text="${attempt.exam.subject.subjectName} + ' · ' + ${attempt.student.fullName}"></div>
+            <span class="badge fs-6" th:classappend="${attempt.badgeClass}"
+                  th:text="${attempt.pending} ? 'Waiting for teacher marking' : 'Grade ' + ${attempt.grade}"></span>
+            <span class="ms-2 fw-semibold" th:unless="${attempt.pending}"
+                  th:text="${attempt.score} + ' / ' + ${attempt.totalMarks} + ' marks'"></span>
+            <span class="ms-2 text-muted small" th:if="${attempt.submittedAt != null}"
+                  th:text="'Submitted ' + ${#temporals.format(attempt.submittedAt,'dd MMM yyyy, HH:mm')}"></span>
+        </div>
+    </div>
+</div>
+
+<!-- Every question with the submitted answer, correct answer and feedback (read only) -->
+<div th:fragment="answerReview(attempt)">
+    <!-- paper (offline) exam: marks were entered by the teacher; show remarks and the answer-sheet scans -->
+    <th:block th:if="${@offlineExamService.isOffline(attempt.exam.id)}">
+        <div class="soft-card mb-3"
+             th:with="sheets=${@offlineExamService.sheetsFor(attempt.exam.id, attempt.student.id)},remarks=${@offlineExamService.remarksFor(attempt.exam.id, attempt.student.id)}">
+            <div class="card-pad">
+                <div class="fw-semibold mb-1">📝 Paper exam</div>
+                <div class="text-muted small">Written on paper and checked by the teacher.</div>
+                <div class="mt-2" th:if="${remarks != null}">💬 <span th:text="${remarks}"></span></div>
+                <div class="mt-3 fw-semibold" th:if="${!#lists.isEmpty(sheets)}">Answer sheet</div>
+                <div class="d-flex flex-wrap gap-2 mt-2">
+                    <a th:each="s, st : ${sheets}" th:href="@{/exams/sheet/{id}(id=${s.id})}" target="_blank" rel="noopener"
+                       class="border rounded p-1 text-center text-decoration-none" style="width:110px;">
+                        <img th:if="${s.image}" th:src="@{/exams/sheet/{id}(id=${s.id})}" alt="Answer sheet" style="max-width:100%;max-height:100px;">
+                        <div th:unless="${s.image}" class="py-3">📄 PDF</div>
+                        <div class="small" th:text="'Page ' + ${st.count}"></div>
+                    </a>
+                </div>
+                <div class="small text-muted mt-2" th:if="${#lists.isEmpty(sheets)}">No scanned answer sheet was added.</div>
+            </div>
+        </div>
+    </th:block>
+    <div class="soft-card mb-3 answer-card" th:each="ans, st : ${attempt.answers}" th:classappend="${ans.rowClass}">
+        <div class="card-pad">
+            <div class="d-flex justify-content-between gap-3">
+                <div class="fw-semibold" th:text="'Q' + ${st.count} + '. ' + ${ans.question.questionText}"></div>
+                <span class="badge bg-light text-dark border text-nowrap"
+                      th:text="${ans.marksAwarded == null} ? 'Pending / ' + ${ans.question.marks} : ${ans.marksAwarded} + ' / ' + ${ans.question.marks}"></span>
+            </div>
+
+            <th:block th:if="${ans.question.type.name() == 'MCQ'}">
+                <div class="mt-2">
+                    <div class="opt-line" th:each="L : ${ {'A','B','C','D'} }"
+                         th:classappend="${L == ans.question.correctOption} ? 'opt-correct' : (${L == ans.selectedOption} ? 'opt-wrong' : '')">
+                        <b th:text="${L}"></b>
+                        <span th:text="${ans.question.optionText(L)}"></span>
+                        <small th:if="${L == ans.selectedOption}" class="ms-2 text-muted">← student's answer</small>
+                        <small th:if="${L == ans.question.correctOption}" class="ms-2 text-success">✔ correct</small>
+                    </div>
+                    <div class="text-muted small mt-1" th:if="${ans.selectedOption == null}">Not answered</div>
+                </div>
+            </th:block>
+
+            <th:block th:if="${ans.question.type.name() == 'SHORT'}">
+                <div class="mt-2 small text-muted">Submitted answer</div>
+                <div class="written-answer" th:text="${ans.answerText != null} ? ${ans.answerText} : '— not answered —'"></div>
+                <div class="mt-2 small text-muted" th:if="${ans.question.modelAnswer != null}">Model answer</div>
+                <div class="written-answer model" th:if="${ans.question.modelAnswer != null}" th:text="${ans.question.modelAnswer}"></div>
+            </th:block>
+
+            <div class="mt-2 small" th:if="${ans.feedback != null}">
+                💬 <span th:text="${ans.feedback}"></span>
+                <span class="badge bg-secondary ms-1" th:if="${ans.teacherGraded}">teacher</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

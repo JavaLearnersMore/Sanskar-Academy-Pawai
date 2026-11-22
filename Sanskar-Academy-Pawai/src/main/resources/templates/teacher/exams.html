@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <title>Exams | Sanskar Academy</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link th:href="@{/css/portal.css}" rel="stylesheet">
+</head>
+<body class="portal-body">
+<div th:replace="~{fragments/header :: header}"></div>
+<div th:replace="~{fragments/portal-nav :: nav('exams')}"></div>
+<div class="portal-wrap">
+<div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+<div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+<h3 class="mb-3">🧠 Exams</h3>
+<div class="alert-tile mb-4" th:if="${pendingReview > 0}">
+    ⏳ <b th:text="${pendingReview}"></b> submission(s) have written answers waiting for your marking.
+</div>
+<div class="row g-4">
+  <div class="col-lg-4">
+    <div class="soft-card"><div class="card-title-row"><h5>Create new exam</h5></div>
+      <div class="card-pad">
+        <form th:action="@{/teacher/exams/create}" method="post">
+          <div class="mb-3"><label class="form-label">Class &amp; subject</label>
+            <select name="subjectId" class="form-select" required th:disabled="${#lists.isEmpty(subjects)}">
+              <option value="" th:if="${#lists.isEmpty(subjects)}">-- add your subject first (below) --</option>
+              <option th:each="s : ${subjects}" th:value="${s.id}" th:text="${s.classEntity.className} + '  -  ' + ${s.subjectName}"></option>
+            </select></div>
+          <div class="mb-3"><label class="form-label">Title</label>
+            <input name="title" class="form-control" maxlength="150" placeholder="Unit test 1" required></div>
+          <div class="mb-3"><label class="form-label">Instructions (optional)</label>
+            <textarea name="description" class="form-control" rows="2" maxlength="500"></textarea></div>
+          <div class="row">
+            <div class="col-6 mb-3"><label class="form-label">Minutes</label>
+              <input type="number" name="durationMinutes" class="form-control" value="30" min="5" max="240"></div>
+            <div class="col-6 mb-3"><label class="form-label">Last start date <span class="text-muted small">(online)</span></label>
+              <input type="datetime-local" name="dueDate" class="form-control"></div>
+            <div class="col-6 mb-3"><label class="form-label">Exam date <span class="text-muted small">(paper)</span></label>
+              <input type="date" name="examDate" class="form-control"></div>
+          </div>
+          <div class="small text-muted mb-2">Choose how this exam will be taken by pressing one of the two buttons.</div>
+          <button class="btn btn-primary w-100 mb-2" th:disabled="${#lists.isEmpty(subjects)}"
+                  th:formaction="@{/teacher/exams/create}">&#128187; Create ONLINE exam (students write on screen)</button>
+          <button class="btn btn-dark w-100" th:disabled="${#lists.isEmpty(subjects)}"
+                  th:formaction="@{/teacher/exams/offline/create}">&#128221; Create PAPER exam (offline - print &amp; enter marks)</button>
+        </form>
+        <hr>
+        <div class="fw-semibold mb-2">Teach a subject that is not listed?</div>
+        <div class="small text-muted mb-2" th:if="${#lists.isEmpty(subjects)}">No subject is linked to you yet. Add one here, or ask the admin to assign it (Admin &rarr; Classes &amp; Timetable).</div>
+        <form th:action="@{/teacher/exams/my-subject}" method="post">
+          <div class="mb-2"><select name="classId" class="form-select" required>
+            <option value="">-- choose class --</option>
+            <option th:each="c : ${classes}" th:value="${c.id}" th:text="${c.className}"></option></select></div>
+          <div class="input-group">
+            <input name="subjectName" class="form-control" maxlength="60" placeholder="Subject e.g. Maths" required>
+            <button class="btn btn-outline-primary">Add</button></div>
+        </form>
+      </div></div>
+  </div>
+  <div class="col-lg-8">
+    <div class="soft-card"><div class="card-title-row"><h5>My exams</h5></div>
+      <div class="card-pad">
+        <div class="list-row" th:each="e : ${exams}">
+          <div class="flex-grow-1">
+            <div class="fw-semibold" th:text="${e.title}"></div>
+            <small class="text-muted" th:text="${e.subject.subjectName} + ' · ' + ${e.subject.classEntity.className} + ' · ' + ${e.questions.size()} + ' questions · ' + ${e.totalMarks} + ' marks · ' + ${e.durationMinutes} + ' min'"></small>
+          </div>
+          <span class="badge bg-info text-dark" th:if="${@offlineExamService.isOffline(e.id)}">📝 Paper</span>
+          <span class="badge ms-1" th:classappend="${e.statusBadge}" th:text="${e.status}"></span>
+          <a class="btn btn-sm btn-outline-primary ms-2" th:if="${e.status.name() == 'DRAFT'}" th:href="@{/teacher/exams/{id}(id=${e.id})}">Edit</a>
+          <th:block th:if="${@offlineExamService.isOffline(e.id)}">
+            <a class="btn btn-sm btn-outline-secondary ms-1" th:href="@{/teacher/exams/{id}/paper(id=${e.id})}" target="_blank">🖨 Paper</a>
+            <a class="btn btn-sm btn-outline-dark ms-1" th:href="@{/teacher/exams/{id}/offline(id=${e.id})}">Marks &amp; sheets</a>
+          </th:block>
+          <th:block th:unless="${@offlineExamService.isOffline(e.id)}">
+            <a class="btn btn-sm btn-outline-dark ms-2" th:unless="${e.status.name() == 'DRAFT'}" th:href="@{/teacher/exams/{id}/monitor(id=${e.id})}">Monitor</a>
+            <a class="btn btn-sm btn-outline-success ms-2" th:unless="${e.status.name() == 'DRAFT'}" th:href="@{/teacher/exams/{id}/results(id=${e.id})}">Results</a>
+          </th:block>
+        </div>
+        <div class="empty-note" th:if="${#lists.isEmpty(exams)}">No exams yet. Create your first one 👈</div>
+      </div></div>
+  </div>
+</div>
+</div>
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

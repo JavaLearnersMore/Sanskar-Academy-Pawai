@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<ul th:fragment="tabs(active)" class="nav nav-pills mb-3 flex-wrap gap-1">
+    <li class="nav-item"><a class="nav-link" th:classappend="${active == 'staff'} ? 'active'" th:href="@{/admin/staff}">Staff &amp; Rules</a></li>
+    <li class="nav-item"><a class="nav-link" th:classappend="${active == 'attendance'} ? 'active'" th:href="@{/admin/staff/attendance}">Attendance</a></li>
+    <li class="nav-item"><a class="nav-link" th:classappend="${active == 'holidays'} ? 'active'" th:href="@{/admin/staff/holidays}">Holidays</a></li>
+    <li class="nav-item"><a class="nav-link" th:classappend="${active == 'leaves'} ? 'active'" th:href="@{/admin/staff/leaves}">Leave Requests</a></li>
+    <li class="nav-item"><a class="nav-link" th:classappend="${active == 'payroll'} ? 'active'" th:href="@{/admin/staff/payroll}">Salary</a></li>
+</ul>
+</body>
+</html>

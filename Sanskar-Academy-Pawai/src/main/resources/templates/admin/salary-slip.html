@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Salary Slip | Sanskar Academy</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #eef1f6; }
+        .receipt { max-width: 720px; margin: 30px auto; background: #fff; border-radius: 14px;
+                   box-shadow: 0 6px 24px rgba(0,0,0,.1); overflow: hidden; }
+        .receipt-head { background: linear-gradient(90deg, #002147, #00509E); color: #fff; padding: 22px 30px; }
+        .receipt-body { padding: 26px 30px; }
+        .amount-box { background: #f1f8f3; border: 2px dashed #198754; border-radius: 12px; padding: 14px 20px; }
+        .sign-line { border-top: 1px solid #333; width: 200px; margin-top: 50px; padding-top: 4px; }
+        @media print {
+            body { background: #fff; } .no-print { display: none !important; }
+            .receipt { box-shadow: none; margin: 0; max-width: 100%; }
+            .receipt-head { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        }
+    </style>
+</head>
+<body>
+<div class="receipt">
+    <div class="receipt-head d-flex justify-content-between align-items-center">
+        <div><h4 class="mb-0">🎓 Sanskar Academy Classes</h4><small>Salary Slip</small></div>
+        <div class="text-end">
+            <div class="fw-bold" th:text="${salary.slipNumber}"></div>
+            <small th:text="${#temporals.format(salary.paymentDate,'dd MMM yyyy')}"></small>
+        </div>
+    </div>
+    <div class="receipt-body">
+        <div class="row mb-3">
+            <div class="col-6">
+                <div class="text-muted small">Paid to</div>
+                <div class="fw-semibold fs-5" th:text="${salary.teacher.fullName}"></div>
+                <div class="small" th:text="${salary.teacher.email}"></div>
+            </div>
+            <div class="col-6 text-end">
+                <div class="text-muted small">Salary for</div>
+                <div class="fw-semibold" th:text="${salary.periodLabel}"></div>
+                <div class="text-muted small mt-2">Payment mode</div>
+                <div class="fw-semibold" th:text="${salary.paymentMode}"></div>
+            </div>
+        </div>
+        <table class="table table-sm">
+            <tbody>
+            <tr><td>Base salary</td><td class="text-end" th:text="'₹ ' + ${#numbers.formatDecimal(salary.baseAmount,1,'COMMA',2,'POINT')}"></td></tr>
+            <tr><td>Bonus</td><td class="text-end text-success" th:text="'+ ₹ ' + ${#numbers.formatDecimal(salary.bonus,1,'COMMA',2,'POINT')}"></td></tr>
+            <tr><td>Deduction</td><td class="text-end text-danger" th:text="'- ₹ ' + ${#numbers.formatDecimal(salary.deduction,1,'COMMA',2,'POINT')}"></td></tr>
+            </tbody>
+        </table>
+        <div class="amount-box d-flex justify-content-between align-items-center mb-3">
+            <span class="fw-semibold">Net salary paid</span>
+            <span class="fs-3 fw-bold text-success">₹ <span th:text="${#numbers.formatDecimal(salary.netAmount,1,'COMMA',2,'POINT')}"></span></span>
+        </div>
+        <p class="small text-muted" th:if="${salary.remarks != null}" th:text="'Remarks: ' + ${salary.remarks}"></p>
+        <div class="d-flex justify-content-between align-items-end">
+            <small class="text-muted">This is a computer generated slip.</small>
+            <div class="sign-line text-center">Authorised Signature</div>
+        </div>
+    </div>
+</div>
+<div class="text-center mb-5 no-print">
+    <button class="btn btn-primary" onclick="window.print()">🖨 Print Slip</button>
+    <a th:href="@{/admin/salaries}" class="btn btn-outline-secondary">Back to Salaries</a>
+</div>
+</body>
+</html>

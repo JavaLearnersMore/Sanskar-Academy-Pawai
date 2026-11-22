@@ -11,8 +11,8 @@ public class Test {
 	
 	public static void main(String[] args) {
 		BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-	   // System.out.println(encoder.encode("more123!"));
-	    System.out.println(encoder.encode("kasare123!"));
+	    System.out.println(encoder.encode("parent@123!"));
+	    //System.out.println(encoder.encode("kasare123!"));
 	    totpService = new TotpServiceImpl();
 	    String secret = totpService.generateSecret();
 	    System.out.println("Secret : "+secret);

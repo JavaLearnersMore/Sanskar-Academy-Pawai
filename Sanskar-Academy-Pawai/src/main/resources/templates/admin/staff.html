@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <title>Staff | Sanskar Academy</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link th:href="@{/css/portal.css}" rel="stylesheet">
+    <style> body { background-color: #f4f6f9; } .card { border-radius: 12px; } </style>
+</head>
+<body>
+<div th:replace="~{fragments/header :: header}"></div>
+<div class="container-fluid"><div class="row">
+    <div class="col-md-2 p-0"><div th:replace="~{fragments/sidebar :: sidebar}"></div></div>
+    <div class="col-md-10 p-4">
+        <h3 class="mb-3">Staff</h3>
+        <div th:replace="~{fragments/staff-tabs :: tabs('staff')}"></div>
+        <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+        <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+        <div class="card shadow-sm mb-4"><div class="card-body">
+            <h5>Salary rules (for everybody)</h5>
+            <form th:action="@{/admin/staff/settings}" method="post" class="row g-3 align-items-end">
+                <div class="col-md-2"><label class="form-label">Paid leave per month (days)</label>
+                    <input type="number" step="0.5" min="0" max="31" name="paidLeave" class="form-control" th:value="${setting.paidLeavePerMonth}" required></div>
+                <div class="col-md-2"><label class="form-label">Salary divided by (days)</label>
+                    <input type="number" min="20" max="31" name="divisor" class="form-control" th:value="${setting.monthDivisor}" required></div>
+                <div class="col-md-6"><label class="form-label">Default weekly off (a staff member can have his/her own)</label>
+                    <div class="d-flex flex-wrap gap-2">
+ <label th:each="d : ${days}" class="form-check form-check-inline m-0">
+  <input class="form-check-input" type="checkbox" name="offDays" th:value="${d.name()}" th:checked="${#strings.contains(setting.weeklyOffDays == null ? '' : setting.weeklyOffDays, d.name())}">
+  <span class="form-check-label" th:text="${#strings.capitalize(#strings.toLowerCase(d.name()))}"></span></label></div></div>
+                <div class="col-md-2"><button class="btn btn-primary w-100">Save rules</button></div>
+            </form>
+            <div class="small text-muted mt-2">Rule: absent days + leave days + half days (&frac12; each) are counted; the first <b th:text="${setting.paidLeavePerMonth}">2</b> days in a month are paid; every extra day is cut from the salary at (monthly salary &divide; <span th:text="${setting.monthDivisor}">30</span>) per day.</div>
+        </div></div>
+
+        <div class="card shadow-sm mb-4"><div class="card-body">
+            <h5>Add a staff member</h5>
+            <form th:action="@{/admin/staff/add}" method="post" class="row g-3">
+                <div class="col-md-12">
+                    <label class="form-label">Option A: pick an existing teacher / staff login</label>
+                    <select name="existingUserId" class="form-select">
+                        <option value="">-- or fill option B below to create a new login --</option>
+                        <option th:each="u : ${availableUsers}" th:value="${u.id}" th:text="${u.fullName} + ' (' + ${u.role.name} + ')'"></option>
+                    </select>
+                </div>
+                <div class="col-12"><div class="small text-muted">Option B: new person (gets a STAFF login; first login shows the authenticator QR once)</div></div>
+                <div class="col-md-3"><input name="fullName" class="form-control" placeholder="Full name"></div>
+                <div class="col-md-2"><input name="username" class="form-control" placeholder="Username (4+)"></div>
+                <div class="col-md-2"><input type="password" name="password" class="form-control" placeholder="Password (8+)" autocomplete="new-password"></div>
+                <div class="col-md-3"><input type="email" name="email" class="form-control" placeholder="E-mail"></div>
+                <div class="col-md-2"><input name="mobile" class="form-control" placeholder="Mobile"></div>
+                <div class="col-12"><hr class="my-1"></div>
+                <div class="col-md-2"><label class="form-label">Type</label>
+                    <select name="staffType" class="form-select" required><option value="TEACHING">Teaching</option><option value="NON_TEACHING">Non-teaching</option></select></div>
+                <div class="col-md-3"><label class="form-label">Designation</label><input name="designation" class="form-control" placeholder="Accountant, Peon, Maths teacher..."></div>
+                <div class="col-md-2"><label class="form-label">Monthly salary</label><input type="number" step="0.01" min="0" name="salary" class="form-control" required></div>
+                <div class="col-md-2"><label class="form-label">Joining date</label><input type="date" name="joinDate" class="form-control"></div>
+                <div class="col-md-3"><label class="form-label">Birth date (for wishes)</label><input type="date" name="birthDate" class="form-control"></div>
+                <div class="col-12"><label class="form-label">Weekly off (leave empty to use the default above)</label>
+                    <div class="d-flex flex-wrap gap-2">
+ <label th:each="d : ${days}" class="form-check form-check-inline m-0">
+  <input class="form-check-input" type="checkbox" name="offDays" th:value="${d.name()}" >
+  <span class="form-check-label" th:text="${#strings.capitalize(#strings.toLowerCase(d.name()))}"></span></label></div></div>
+                <div class="col-12"><button class="btn btn-success">Add staff</button></div>
+            </form>
+        </div></div>
+
+        <div class="card shadow-sm"><div class="card-body">
+            <h5>All staff</h5>
+            <div class="table-responsive">
+            <table class="table align-middle">
+                <thead class="table-light"><tr><th>Name</th><th>Type / Designation</th><th>Salary</th><th>Joined</th><th>Birth date</th><th>Weekly off</th><th>Active</th><th></th></tr></thead>
+                <tbody>
+                <tr th:each="s : ${staffList}">
+                  
+                    <td><form th:id="${'f'+s.id}" th:action="@{/admin/staff/{id}/update(id=${s.id})}" method="post"></form><div class="fw-semibold" th:text="${s.user.fullName}"></div><small class="text-muted" th:text="${s.user.username} + ' - ' + ${s.user.role.name}"></small></td>
+                    <td style="min-width:170px;">
+                        <select th:attr="form=${'f'+s.id}" name="staffType" class="form-select form-select-sm mb-1">
+                            <option value="TEACHING" th:selected="${s.staffType != null and s.staffType.name() == 'TEACHING'}">Teaching</option>
+                            <option value="NON_TEACHING" th:selected="${s.staffType != null and s.staffType.name() == 'NON_TEACHING'}">Non-teaching</option></select>
+                        <input th:attr="form=${'f'+s.id}" name="designation" class="form-control form-control-sm" th:value="${s.designation}" placeholder="Designation"></td>
+                    <td style="min-width:110px;"><input th:attr="form=${'f'+s.id}" type="number" step="0.01" min="0" name="salary" class="form-control form-control-sm" th:value="${s.monthlySalary}" required></td>
+                    <td><input th:attr="form=${'f'+s.id}" type="date" name="joinDate" class="form-control form-control-sm" th:value="${s.joinDate}"></td>
+                    <td><input th:attr="form=${'f'+s.id}" type="date" name="birthDate" class="form-control form-control-sm" th:value="${s.birthDate}"></td>
+                    <td style="min-width:230px;"><div class="d-flex flex-wrap gap-1 small">
+                        <label th:each="d : ${days}" class="me-1"><input th:attr="form=${'f'+s.id}" type="checkbox" name="offDays" th:value="${d.name()}"
+                            th:checked="${s.weeklyOffDays != null and #strings.contains(s.weeklyOffDays, d.name())}">
+                            <span th:text="${#strings.substring(#strings.capitalize(#strings.toLowerCase(d.name())),0,3)}"></span></label></div>
+                        <div class="text-muted small" th:if="${s.weeklyOffDays == null or s.weeklyOffDays == ''}">default is used</div></td>
+                    <td><input th:attr="form=${'f'+s.id}" type="checkbox" name="active" value="true" th:checked="${s.active}"></td>
+                    <td><button th:attr="form=${'f'+s.id}" class="btn btn-sm btn-primary">Save</button></td>
+                  </tr>
+                <tr th:if="${#lists.isEmpty(staffList)}"><td colspan="8" class="text-center text-muted py-4">No staff yet</td></tr>
+                </tbody>
+            </table></div>
+        </div></div>
+
+    </div></div></div>
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

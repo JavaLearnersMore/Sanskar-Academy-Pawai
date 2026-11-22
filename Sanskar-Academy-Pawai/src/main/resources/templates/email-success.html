@@ -25,11 +25,9 @@
 <div class="card bg-success text-white shadow-lg">
     <h2>🎉 Email Verified Successfully!</h2>
     <p>Your email has been verified.</p>
-
-    <a th:href="@{/setup-2fa(username=${username})}" 
-       class="btn btn-light mt-3">
-        Setup 2FA
-    </a>
+    <p>The admin must approve your account. After that, log in - you will be asked to scan
+       a QR code with Google Authenticator the first time.</p>
+    <a th:href="@{/login}" class="btn btn-light mt-3">Go to login</a>
 </div>
 
 </body>

@@ -51,7 +51,7 @@ public class AdminController {
 	@PostMapping("/regenerate-secret/{username}")
 	public String regenerateSecret(@PathVariable String username) {
 		userService.regenerateSecretForUser(username);
-		return "redirect:/admin/dashboard";
+		return "redirect:/admin/settings?reset";
 	}
 
 	@GetMapping("/pending-users")
@@ -95,11 +95,13 @@ public class AdminController {
 	}
 
 	@GetMapping("/settings")
-	public String settings(Model model) {	
+	public String settings(Model model, Principal principal) {	
 
 		List<User> pendingUsers = userRepository.findPendingUsers();
 
 		model.addAttribute("pendingUsers", pendingUsers);
+		model.addAttribute("allUsers", userService.getAllUsers().stream()
+				.filter(u -> !u.getUsername().equals(principal.getName())).toList());
 
 		return "admin/settings";
 	}

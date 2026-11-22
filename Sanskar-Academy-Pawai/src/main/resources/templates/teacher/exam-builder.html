@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <title>Exam builder | Sanskar Academy</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link th:href="@{/css/portal.css}" rel="stylesheet">
+    <style>.row.align-items-start .soft-card { height: auto; }</style>
+</head>
+<body class="portal-body">
+<div th:replace="~{fragments/header :: header}"></div>
+<div th:replace="~{fragments/portal-nav :: nav('exams')}"></div>
+<div class="portal-wrap">
+<div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+<div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+<a th:href="@{/teacher/exams}" class="small">← All exams</a>
+<div class="d-flex flex-wrap justify-content-between align-items-center my-2 gap-2">
+  <div>
+    <h3 class="mb-0" th:text="${exam.title}"></h3>
+    <span class="text-muted" th:text="${exam.subject.subjectName} + ' · ' + ${exam.subject.classEntity.className} + ' · ' + ${exam.durationMinutes} + ' min · total ' + ${exam.totalMarks} + ' marks'"></span>
+    <span class="badge ms-2" th:classappend="${exam.statusBadge}" th:text="${exam.status}"></span>
+  </div>
+  <div th:if="${@offlineExamService.isOffline(exam.id)}" class="d-flex flex-wrap gap-2">
+    <a class="btn btn-outline-secondary" th:href="@{/teacher/exams/{id}/paper(id=${exam.id})}" target="_blank">🖨 Print question paper</a>
+    <a class="btn btn-outline-secondary" th:href="@{/teacher/exams/{id}/paper(id=${exam.id},key=1)}" target="_blank">🔑 Paper with answer key</a>
+    <a class="btn btn-success" th:href="@{/teacher/exams/{id}/offline(id=${exam.id})}">📝 Marks &amp; answer sheets</a>
+  </div>
+  <div th:if="${exam.status.name() == 'DRAFT' and !@offlineExamService.isOffline(exam.id)}">
+    <form th:action="@{/teacher/exams/{id}/publish(id=${exam.id})}" method="post"
+          onsubmit="return confirm('Publish this exam? Questions cannot be changed afterwards.');">
+      <button class="btn btn-success" th:disabled="${#lists.isEmpty(exam.questions)}">🚀 Publish to students</button>
+    </form>
+  </div>
+</div>
+
+<div class="row g-4 mt-1 align-items-start">
+  <div class="col-lg-5" th:if="${exam.status.name() == 'DRAFT'}">
+
+    <div class="soft-card mb-4"><div class="card-title-row"><h5>🤖 Generate with AI</h5></div>
+      <div class="card-pad">
+        <div class="alert alert-warning py-2 small" th:unless="${aiEnabled}">AI is not configured (no API key). Use manual questions.</div>
+        <form th:action="@{/teacher/exams/{id}/ai-questions(id=${exam.id})}" method="post">
+          <div class="mb-2"><label class="form-label">Chapter / topic</label>
+            <input name="topic" class="form-control" maxlength="200" required></div>
+          <div class="row">
+            <div class="col-4 mb-2"><label class="form-label">Count</label>
+              <input type="number" name="count" value="5" min="1" max="10" class="form-control"></div>
+            <div class="col-4 mb-2"><label class="form-label">Marks each</label>
+              <input type="number" name="marksEach" value="1" min="1" max="10" class="form-control"></div>
+            <div class="col-4 mb-2"><label class="form-label">Level</label>
+              <select name="difficulty" class="form-select"><option>Easy</option><option selected>Medium</option><option>Hard</option></select></div>
+          </div>
+          <button class="btn btn-primary w-100" th:disabled="${!aiEnabled}">Generate MCQs</button>
+          <div class="small text-muted mt-2">AI can make mistakes - check each question before publishing.</div>
+        </form>
+      </div></div>
+
+    <div class="soft-card"><div class="card-title-row"><h5>✍️ Add a question</h5></div>
+      <div class="card-pad">
+        <form th:action="@{/teacher/exams/{id}/questions(id=${exam.id})}" method="post">
+          <div class="mb-2"><label class="form-label">Type</label>
+            <select name="type" id="qtype" class="form-select" onchange="toggleType()">
+              <option value="MCQ">Multiple choice</option><option value="SHORT">Written answer</option></select></div>
+          <div class="mb-2"><label class="form-label">Question</label>
+            <textarea name="questionText" class="form-control" rows="2" maxlength="1000" required></textarea></div>
+          <div id="mcqBox">
+            <input name="optionA" class="form-control mb-1" placeholder="Option A">
+            <input name="optionB" class="form-control mb-1" placeholder="Option B">
+            <input name="optionC" class="form-control mb-1" placeholder="Option C">
+            <input name="optionD" class="form-control mb-2" placeholder="Option D">
+            <label class="form-label">Correct option</label>
+            <select name="correctOption" class="form-select mb-2"><option>A</option><option>B</option><option>C</option><option>D</option></select>
+          </div>
+          <div id="shortBox" style="display:none">
+            <label class="form-label">Model answer (used by AI to mark)</label>
+            <textarea name="modelAnswer" class="form-control mb-2" rows="3" maxlength="2000"></textarea>
+          </div>
+          <div class="mb-3"><label class="form-label">Marks</label>
+            <input type="number" name="marks" value="1" min="1" max="20" class="form-control"></div>
+          <button class="btn btn-outline-primary w-100">Add question</button>
+        </form>
+      </div></div>
+  </div>
+
+  <div th:class="${exam.status.name() == 'DRAFT'} ? 'col-lg-7' : 'col-12'">
+    <div class="soft-card"><div class="card-title-row"><h5 th:text="'Questions (' + ${exam.questions.size()} + ')'"></h5></div>
+      <div class="card-pad">
+        <div class="mb-3 pb-3 border-bottom" th:each="q, st : ${exam.questions}">
+          <div class="d-flex justify-content-between gap-2">
+            <div class="fw-semibold" th:text="${st.count} + '. ' + ${q.questionText}"></div>
+            <div class="text-nowrap">
+              <span class="badge bg-light text-dark border" th:text="${q.marks} + ' mark(s)'"></span>
+              <form class="d-inline" th:if="${exam.status.name() == 'DRAFT'}" method="post"
+                    th:action="@{/teacher/exams/{id}/questions/{q}/delete(id=${exam.id},q=${q.id})}">
+                <button class="btn btn-sm btn-outline-danger py-0">✕</button></form>
+            </div>
+          </div>
+          <div th:if="${q.type.name() == 'MCQ'}" class="mt-1">
+            <div class="opt-line" th:each="L : ${ {'A','B','C','D'} }" th:classappend="${L == q.correctOption} ? 'opt-correct'">
+              <b th:text="${L}"></b> <span th:text="${q.optionText(L)}"></span></div>
+          </div>
+          <div th:if="${q.type.name() == 'SHORT'}" class="written-answer model mt-1" th:text="'Model answer: ' + ${q.modelAnswer}"></div>
+        </div>
+        <div class="empty-note" th:if="${#lists.isEmpty(exam.questions)}">No questions yet.</div>
+      </div></div>
+  </div>
+</div>
+<script>
+function toggleType(){var s=document.getElementById('qtype').value==='SHORT';
+ document.getElementById('mcqBox').style.display=s?'none':'block';
+ document.getElementById('shortBox').style.display=s?'block':'none';}
+</script>
+</div>
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

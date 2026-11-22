@@ -37,6 +37,7 @@ public class UserServiceImpl implements UserService {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setRole(role);
         user.setTotpSecret(totpService.generateSecret());
+        user.setTotpSetupDone(false);
 
         return userRepository.save(user);
     }
@@ -53,6 +54,7 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         user.setTotpSecret(totpService.generateSecret());
+        user.setTotpSetupDone(false);      // user must scan the new QR at next login
         userRepository.save(user);
     }
 
@@ -77,22 +79,36 @@ public class UserServiceImpl implements UserService {
 	@Override
 	public void registerUser(RegisterDto dto) {
 
-	    if (userRepository.findByUsername(dto.getUsername()).isPresent()) {
-	        throw new RuntimeException("Username already exists");
+	    if (dto.getUsername() == null || dto.getUsername().trim().length() < 4) {
+	        throw new IllegalArgumentException("Username must be at least 4 characters");
+	    }
+	    if (dto.getPassword() == null || dto.getPassword().length() < 8) {
+	        throw new IllegalArgumentException("Password must be at least 8 characters");
+	    }
+	    if (userRepository.findByUsername(dto.getUsername().trim()).isPresent()) {
+	        throw new IllegalArgumentException("Username already exists");
+	    }
+	    if (dto.getEmail() != null && userRepository.findByEmail(dto.getEmail().trim()).isPresent()) {
+	        throw new IllegalArgumentException("This email is already registered");
+	    }
+	    // self registration is only for these roles - admins are created by an admin
+	    if (dto.getRole() == null || !List.of("STUDENT", "PARENT", "TEACHER").contains(dto.getRole())) {
+	        throw new IllegalArgumentException("Please choose Student, Parent or Teacher");
 	    }
 
 	    Role role = roleRepository.findByName(dto.getRole())
-	            .orElseThrow(() -> new RuntimeException("Invalid role"));
+	            .orElseThrow(() -> new IllegalArgumentException("Invalid role"));
 
 	    User user = new User();
 	    user.setFullName(dto.getFullName());
-	    user.setUsername(dto.getUsername());
-	    user.setEmail(dto.getEmail());
+	    user.setUsername(dto.getUsername().trim());
+	    user.setEmail(dto.getEmail() == null ? null : dto.getEmail().trim());
 	    user.setMobileNumber(dto.getMobileNumber());
 	    user.setPassword(passwordEncoder.encode(dto.getPassword()));
 	    user.setRole(role);
 	    user.setEnabled(true);
 	    user.setTotpSecret(totpService.generateSecret());
+	    user.setTotpSetupDone(false);
 	    String token = UUID.randomUUID().toString();
 	    user.setVerificationToken(token);
 	    user.setEmailVerified(false);

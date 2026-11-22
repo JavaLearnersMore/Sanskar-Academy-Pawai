@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <title>Exam monitor | Sanskar Academy</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="refresh" content="15">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link th:href="@{/css/portal.css}" rel="stylesheet">
+</head>
+<body class="portal-body">
+<div th:replace="~{fragments/header :: header}"></div>
+<div th:replace="~{fragments/portal-nav :: nav('exams')}"></div>
+<div class="portal-wrap">
+<a th:href="@{/teacher/exams}" class="small">&larr; All exams</a>
+<div class="d-flex flex-wrap justify-content-between align-items-center my-2 gap-2">
+  <div><h3 class="mb-0">&#128064; <span th:text="${exam.title}"></span></h3>
+    <span class="text-muted" th:text="${exam.subject.classEntity.className} + ' &middot; ' + ${exam.subject.subjectName} + ' &middot; ' + ${exam.durationMinutes} + ' min'"></span>
+    <span class="badge ms-2" th:classappend="${exam.statusBadge}" th:text="${exam.status}"></span></div>
+  <div><a class="btn btn-outline-success" th:href="@{/teacher/exams/{id}/results(id=${exam.id})}">Results &amp; marks</a></div>
+</div>
+<div class="small text-muted mb-3">This page refreshes by itself every 15 seconds.</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-6 col-md-3"><div class="stat-tile"><div><div class="fw-bold fs-4" th:text="${total}"></div><small class="text-muted">Students in class</small></div></div></div>
+  <div class="col-6 col-md-3"><div class="stat-tile"><div><div class="fw-bold fs-4" th:text="${writing}"></div><small class="text-muted">Writing now</small></div></div></div>
+  <div class="col-6 col-md-3"><div class="stat-tile"><div><div class="fw-bold fs-4" th:text="${done}"></div><small class="text-muted">Submitted</small></div></div></div>
+  <div class="col-6 col-md-3"><div class="stat-tile"><div><div class="fw-bold fs-4" th:text="${notStarted}"></div><small class="text-muted">Not started</small></div></div></div>
+</div>
+
+<div class="soft-card"><div class="card-title-row"><h5>Student status</h5></div>
+  <div class="card-pad"><div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light"><tr><th>Student</th><th>Status</th><th>Started</th><th>Time left</th><th>Warnings</th><th>Score</th><th></th></tr></thead>
+      <tbody>
+        <tr th:each="r : ${rows}">
+          <td th:text="${r.student.fullName}"></td>
+          <td><span class="badge" th:classappend="${r.badgeClass}" th:text="${r.label}"></span></td>
+          <td th:text="${r.attempt != null} ? ${#temporals.format(r.attempt.startedAt,'dd MMM HH:mm')} : '-'"></td>
+          <td th:text="${r.timeLeft}"></td>
+          <td><span th:if="${r.attempt != null}" class="badge" th:classappend="${@examGuardService.violationsOf(r.attempt.id) == 0} ? 'bg-light text-dark border' : 'bg-danger'"
+                th:text="${@examGuardService.violationsOf(r.attempt.id)} + ' left page'"></span>
+                <span th:if="${r.attempt != null and @examGuardService.autoSubmitted(r.attempt.id)}" class="badge bg-dark">auto-submitted</span></td>
+          <td th:text="${r.state == 'SUBMITTED'} ? ${r.attempt.score} + '/' + ${r.attempt.totalMarks} + ' (' + ${r.attempt.percentage} + '%)' : (${r.state == 'REVIEW'} ? 'Pending' : '-')"></td>
+          <td><a class="btn btn-sm btn-outline-primary" th:if="${r.state == 'SUBMITTED' or r.state == 'REVIEW'}"
+                 th:href="@{/teacher/exams/attempts/{id}(id=${r.attempt.id})}">View answers</a></td>
+        </tr>
+      </tbody></table></div>
+    <div class="empty-note" th:if="${#lists.isEmpty(rows)}">No student is enrolled in this class yet.</div>
+  </div></div>
+</div>
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

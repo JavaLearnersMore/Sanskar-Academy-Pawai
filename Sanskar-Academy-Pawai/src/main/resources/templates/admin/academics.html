@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Classes &amp; Timetable | Sanskar Academy</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link th:href="@{/css/portal.css}" rel="stylesheet">
+    <style> body { background-color: #f4f6f9; } .card { border-radius: 12px; } </style>
+</head>
+<body>
+
+<div th:replace="~{fragments/header :: header}"></div>
+
+<div class="container-fluid">
+<div class="row">
+
+    <div class="col-md-2 p-0"><div th:replace="~{fragments/sidebar :: sidebar}"></div></div>
+
+    <div class="col-md-10 p-4">
+
+        <h3 class="mb-3">📚 Classes, Subjects &amp; Timetable</h3>
+
+        <div th:if="${success}" class="alert alert-success alert-dismissible fade show">
+            <span th:text="${success}"></span><button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show">
+            <span th:text="${error}"></span><button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <ul class="nav nav-pills mb-4">
+            <li class="nav-item"><a class="nav-link" th:classappend="${tab=='classes'} ? 'active'" th:href="@{/admin/academics(tab='classes')}">Classes &amp; Students</a></li>
+            <li class="nav-item"><a class="nav-link" th:classappend="${tab=='subjects'} ? 'active'" th:href="@{/admin/academics(tab='subjects')}">Subjects &amp; Teachers</a></li>
+            <li class="nav-item"><a class="nav-link" th:classappend="${tab=='timetable'} ? 'active'" th:href="@{/admin/academics(tab='timetable')}">Timetable (Lectures)</a></li>
+            <li class="nav-item"><a class="nav-link" th:classappend="${tab=='parents'} ? 'active'" th:href="@{/admin/academics(tab='parents')}">Parent Links</a></li>
+        </ul>
+
+        <!-- ================= CLASSES ================= -->
+        <div th:if="${tab=='classes'}">
+            <div class="row g-4">
+                <div class="col-lg-4">
+                    <div class="card shadow"><div class="card-body">
+                        <h5>Create Class</h5>
+                        <form th:action="@{/admin/academics/class}" method="post">
+                            <div class="mb-3"><label class="form-label">Class name</label>
+                                <input class="form-control" name="className" placeholder="10th" required></div>
+                            <div class="mb-3"><label class="form-label">Academic year</label>
+                                <input class="form-control" name="academicYear" th:value="${defaultYear}" required></div>
+                            <button class="btn btn-primary w-100">Create Class</button>
+                        </form>
+                        <hr>
+                        <div class="fw-semibold mb-2">Existing classes</div>
+                        <div class="list-row" th:each="c : ${classes}">
+                            <span th:text="${c.className} + ' (' + ${c.academicYear} + ')'"></span>
+                            <span class="badge bg-primary" th:text="${studentCount.getOrDefault(c.id, 0)} + ' students'"></span>
+                        </div>
+                        <div class="text-muted" th:if="${#lists.isEmpty(classes)}">No classes yet.</div>
+                    </div></div>
+                </div>
+
+                <div class="col-lg-8">
+                    <div class="card shadow"><div class="card-body">
+                        <h5>Assign Students to Classes</h5>
+                        <div class="table-responsive">
+                        <table class="table align-middle">
+                            <thead class="table-dark"><tr><th>Student</th><th>Current class</th><th style="min-width:280px;">Change / assign</th></tr></thead>
+                            <tbody>
+                            <tr th:each="s : ${students}">
+                                <td><div class="fw-semibold" th:text="${s.fullName}"></div><small class="text-muted" th:text="${s.email}"></small></td>
+                                <td>
+                                    <span th:if="${classByStudent.containsKey(s.id)}" class="badge bg-success"
+                                          th:text="${classByStudent.get(s.id).className}"></span>
+                                    <span th:unless="${classByStudent.containsKey(s.id)}" class="badge bg-secondary">None</span>
+                                </td>
+                                <td>
+                                    <form th:action="@{/admin/academics/enroll}" method="post" class="d-flex gap-2 m-0">
+                                        <input type="hidden" name="studentId" th:value="${s.id}">
+                                        <select name="classId" class="form-select form-select-sm" required>
+                                            <option value="">Select class</option>
+                                            <option th:each="c : ${classes}" th:value="${c.id}" th:text="${c.className} + ' (' + ${c.academicYear} + ')'"></option>
+                                        </select>
+                                        <button class="btn btn-sm btn-primary">Save</button>
+                                    </form>
+                                    <form th:if="${classByStudent.containsKey(s.id)}" th:action="@{/admin/academics/unenroll/{id}(id=${s.id})}" method="post" class="mt-1 m-0">
+                                        <button class="btn btn-sm btn-link text-danger p-0">Remove from class</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(students)}"><td colspan="3" class="text-center text-muted">No students</td></tr>
+                            </tbody>
+                        </table>
+                        </div>
+                    </div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= SUBJECTS ================= -->
+        <div th:if="${tab=='subjects'}">
+            <div class="row g-4">
+                <div class="col-lg-4">
+                    <div class="card shadow"><div class="card-body">
+                        <h5>Assign Subject to Teacher</h5>
+                        <form th:action="@{/admin/academics/subject}" method="post">
+                            <div class="mb-3"><label class="form-label">Subject name</label>
+                                <input class="form-control" name="subjectName" placeholder="Mathematics" required></div>
+                            <div class="mb-3"><label class="form-label">Class</label>
+                                <select name="classId" class="form-select" required>
+                                    <option value="">Select class</option>
+                                    <option th:each="c : ${classes}" th:value="${c.id}" th:text="${c.className} + ' (' + ${c.academicYear} + ')'"></option>
+                                </select></div>
+                            <div class="mb-3"><label class="form-label">Teacher</label>
+                                <select name="teacherId" class="form-select" required>
+                                    <option value="">Select teacher</option>
+                                    <option th:each="t : ${teachers}" th:value="${t.id}" th:text="${t.fullName}"></option>
+                                </select></div>
+                            <button class="btn btn-primary w-100">Assign</button>
+                        </form>
+                    </div></div>
+                </div>
+                <div class="col-lg-8">
+                    <div class="card shadow"><div class="card-body">
+                        <h5>All Subjects</h5>
+                        <div class="table-responsive">
+                        <table class="table align-middle">
+                            <thead class="table-dark"><tr><th>Subject</th><th>Class</th><th>Teacher</th><th style="min-width:260px;">Change teacher</th></tr></thead>
+                            <tbody>
+                            <tr th:each="s : ${subjects}">
+                                <td class="fw-semibold" th:text="${s.subjectName}"></td>
+                                <td th:text="${s.classEntity.className}"></td>
+                                <td th:text="${s.teacher.fullName}"></td>
+                                <td>
+                                    <form th:action="@{/admin/academics/subject/{id}/teacher(id=${s.id})}" method="post" class="d-flex gap-2 m-0">
+                                        <select name="teacherId" class="form-select form-select-sm" required>
+                                            <option th:each="t : ${teachers}" th:value="${t.id}" th:text="${t.fullName}"
+                                                    th:selected="${t.id == s.teacher.id}"></option>
+                                        </select>
+                                        <button class="btn btn-sm btn-outline-primary">Change</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(subjects)}"><td colspan="4" class="text-center text-muted">No subjects yet</td></tr>
+                            </tbody>
+                        </table>
+                        </div>
+                    </div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= TIMETABLE ================= -->
+        <div th:if="${tab=='timetable'}">
+            <div class="row g-4">
+                <div class="col-lg-4">
+                    <div class="card shadow"><div class="card-body">
+                        <h5>Add Lecture</h5>
+                        <form th:action="@{/admin/academics/lecture}" method="post">
+                            <div class="mb-3"><label class="form-label">Subject (class / teacher)</label>
+                                <select name="subjectId" class="form-select" required>
+                                    <option value="">Select subject</option>
+                                    <option th:each="s : ${subjects}" th:value="${s.id}"
+                                            th:text="${s.subjectName} + ' - ' + ${s.classEntity.className} + ' - ' + ${s.teacher.fullName}"></option>
+                                </select></div>
+                            <div class="mb-3"><label class="form-label">Day</label>
+                                <select name="dayOfWeek" class="form-select" required>
+                                    <option th:each="d : ${days}" th:value="${d}" th:text="${d}"></option>
+                                </select></div>
+                            <div class="row">
+                                <div class="col-6 mb-3"><label class="form-label">Start</label><input type="time" name="startTime" class="form-control" required></div>
+                                <div class="col-6 mb-3"><label class="form-label">End</label><input type="time" name="endTime" class="form-control" required></div>
+                            </div>
+                            <div class="mb-3"><label class="form-label">Room (optional)</label><input name="room" class="form-control" maxlength="40"></div>
+                            <button class="btn btn-primary w-100">Add to Timetable</button>
+                        </form>
+                    </div></div>
+                </div>
+                <div class="col-lg-8">
+                    <div class="card shadow"><div class="card-body">
+                        <h5>Weekly Timetable</h5>
+                        <div class="table-responsive">
+                        <table class="table align-middle">
+                            <thead class="table-dark"><tr><th>Day</th><th>Time</th><th>Subject</th><th>Class</th><th>Teacher</th><th>Room</th><th></th></tr></thead>
+                            <tbody>
+                            <tr th:each="l : ${lectures}">
+                                <td><span class="day-chip" th:text="${l.dayOfWeek}"></span></td>
+                                <td><span class="time-chip" th:text="${#temporals.format(l.startTime,'HH:mm')} + ' - ' + ${#temporals.format(l.endTime,'HH:mm')}"></span></td>
+                                <td class="fw-semibold" th:text="${l.subject.subjectName}"></td>
+                                <td th:text="${l.subject.classEntity.className}"></td>
+                                <td th:text="${l.subject.teacher.fullName}"></td>
+                                <td th:text="${l.room}"></td>
+                                <td class="text-nowrap">
+                                    <button type="button" class="btn btn-sm btn-outline-primary"
+                                            data-bs-toggle="modal" th:attr="data-bs-target='#editLecture' + ${l.id}">Edit</button>
+                                    <form th:action="@{/admin/academics/lecture/{id}/delete(id=${l.id})}" method="post" class="m-0 d-inline"
+                                          onsubmit="return confirm('Remove this lecture?');">
+                                        <button class="btn btn-sm btn-outline-danger">Delete</button>
+                                    </form>
+
+                                    <!-- edit window for this lecture -->
+                                    <div class="modal fade text-start" th:id="'editLecture' + ${l.id}" tabindex="-1" aria-hidden="true">
+                                        <div class="modal-dialog"><div class="modal-content">
+                                            <form th:action="@{/admin/academics/lecture/{id}/edit(id=${l.id})}" method="post">
+                                                <div class="modal-header"><h5 class="modal-title">Edit lecture</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                                                <div class="modal-body">
+                                                    <div class="mb-3"><label class="form-label">Subject (class / teacher)</label>
+                                                        <select name="subjectId" class="form-select" required>
+                                                            <option th:each="s : ${subjects}" th:value="${s.id}" th:selected="${s.id == l.subject.id}"
+                                                                    th:text="${s.subjectName} + ' - ' + ${s.classEntity.className} + ' - ' + ${s.teacher.fullName}"></option>
+                                                        </select></div>
+                                                    <div class="mb-3"><label class="form-label">Day</label>
+                                                        <select name="dayOfWeek" class="form-select" required>
+                                                            <option th:each="d : ${days}" th:value="${d}" th:text="${d}" th:selected="${d == l.dayOfWeek}"></option>
+                                                        </select></div>
+                                                    <div class="row">
+                                                        <div class="col-6 mb-3"><label class="form-label">Start</label>
+                                                            <input type="time" name="startTime" class="form-control" th:value="${#temporals.format(l.startTime,'HH:mm')}" required></div>
+                                                        <div class="col-6 mb-3"><label class="form-label">End</label>
+                                                            <input type="time" name="endTime" class="form-control" th:value="${#temporals.format(l.endTime,'HH:mm')}" required></div>
+                                                    </div>
+                                                    <div class="mb-1"><label class="form-label">Room (optional)</label>
+                                                        <input name="room" class="form-control" maxlength="40" th:value="${l.room}"></div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                    <button class="btn btn-primary">Save changes</button>
+                                                </div>
+                                            </form>
+                                        </div></div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(lectures)}"><td colspan="7" class="text-center text-muted">No lectures scheduled</td></tr>
+                            </tbody>
+                        </table>
+                        </div>
+                    </div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= PARENT LINKS ================= -->
+        <div th:if="${tab=='parents'}">
+            <div class="row g-4">
+                <div class="col-lg-4">
+                    <div class="card shadow"><div class="card-body">
+                        <h5>Link Parent to Student</h5>
+                        <form th:action="@{/admin/academics/link}" method="post">
+                            <div class="mb-3"><label class="form-label">Parent</label>
+                                <select name="parentId" class="form-select" required>
+                                    <option value="">Select parent</option>
+                                    <option th:each="p : ${parents}" th:value="${p.id}" th:text="${p.fullName}"></option>
+                                </select></div>
+                            <div class="mb-3"><label class="form-label">Student</label>
+                                <select name="studentId" class="form-select" required>
+                                    <option value="">Select student</option>
+                                    <option th:each="s : ${students}" th:value="${s.id}" th:text="${s.fullName}"></option>
+                                </select></div>
+                            <button class="btn btn-primary w-100">Link</button>
+                        </form>
+                    </div></div>
+                </div>
+                <div class="col-lg-8">
+                    <div class="card shadow"><div class="card-body">
+                        <h5>Parents &amp; Children</h5>
+                        <div class="list-row" th:each="p : ${parents}">
+                            <div>
+                                <div class="fw-semibold" th:text="${p.fullName}"></div>
+                                <small class="text-muted" th:text="${p.email}"></small>
+                            </div>
+                            <div class="text-end">
+                                <span th:each="c : ${childrenByParent.get(p.id)}" class="d-inline-block me-1">
+                                    <form th:action="@{/admin/academics/unlink}" method="post" class="d-inline m-0">
+                                        <input type="hidden" name="parentId" th:value="${p.id}">
+                                        <input type="hidden" name="studentId" th:value="${c.id}">
+                                        <button class="btn btn-sm btn-outline-secondary" title="Remove link"
+                                                th:text="${c.fullName} + ' ✕'"></button>
+                                    </form>
+                                </span>
+                                <span class="text-muted" th:if="${#lists.isEmpty(childrenByParent.get(p.id))}">No child linked</span>
+                            </div>
+                        </div>
+                        <div class="text-muted" th:if="${#lists.isEmpty(parents)}">No parents registered.</div>
+                    </div></div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+</div>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

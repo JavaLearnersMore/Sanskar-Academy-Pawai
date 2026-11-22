@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head><title>Message settings | Sanskar Academy</title><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<style>body{background:#f4f6f9}.acc-card{border-radius:15px}</style></head>
+<body>
+<div th:replace="~{fragments/header :: header}"></div>
+<div class="container py-4" style="max-width:760px">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">&#128172; Message settings</h3>
+    <a class="btn btn-outline-secondary" th:href="@{/account}">&larr; My Account</a>
+  </div>
+  <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+  <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+  <div th:unless="${serviceOn}" class="alert alert-warning">The message service is not switched on for this school yet.</div>
+
+  <div class="card acc-card shadow-sm" th:if="${serviceOn and pref != null}"><div class="card-body p-4">
+    <p class="text-muted">Messages go only to people who switch this on. You choose how, what, and in which language. You can change or stop it any time.</p>
+    <form th:action="@{/account/messages}" method="post">
+      <div class="form-check form-switch mb-3 fs-5">
+        <input class="form-check-input" type="checkbox" name="enabled" value="true" id="en" th:checked="${pref.enabled}">
+        <label class="form-check-label" for="en">Send me messages</label></div>
+
+      <h6>How should we reach you?</h6>
+      <div class="mb-1"><label><input type="checkbox" name="emailOn" value="true" th:checked="${pref.emailOn}"> E-mail
+        <span class="small text-muted" th:unless="${pref.hasEmail}">(no e-mail on your profile)</span></label></div>
+      <div class="mb-1"><label><input type="checkbox" name="smsOn" value="true" th:checked="${pref.smsOn}"> SMS
+        <span class="small text-muted" th:if="${pref.hasPhone}" th:text="'to ' + ${pref.maskedPhone}"></span>
+        <span class="small text-muted" th:unless="${pref.hasPhone}">(no valid mobile number on your profile)</span></label></div>
+      <div class="mb-3"><label><input type="checkbox" name="whatsappOn" value="true" th:checked="${pref.whatsappOn}"> WhatsApp
+        <span class="small text-muted">(you must have agreed to receive WhatsApp messages from the school)</span></label></div>
+
+      <h6>What do you want to receive?</h6>
+      <div class="mb-3">
+        <div th:each="t : ${types}"><label><input type="checkbox" name="categories" th:value="${t.key}" th:checked="${pref.categories.contains(t.key)}"> <span th:text="${t.value}"></span></label></div>
+      </div>
+
+      <h6>Language</h6>
+      <div class="mb-4">
+        <label class="me-3"><input type="radio" name="language" value="EN" th:checked="${pref.language == 'EN'}"> English</label>
+        <label class="me-3"><input type="radio" name="language" value="MR" th:checked="${pref.language == 'MR'}"> &#2350;&#2352;&#2366;&#2336;&#2368;</label>
+        <label><input type="radio" name="language" value="BOTH" th:checked="${pref.language == 'BOTH'}"> Both</label>
+      </div>
+      <button class="btn btn-primary w-100">Save my choices</button>
+    </form>
+    <div class="small text-muted mt-3">Your mobile number and e-mail come from your profile. SMS and WhatsApp are not sent at night (9 pm to 8 am).</div>
+  </div></div>
+</div>
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body></html>

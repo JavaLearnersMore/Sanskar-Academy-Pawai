@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><title>Salary Slip | Sanskar Academy</title><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<style>@media print{.no-print{display:none}}</style></head>
+<body class="bg-light">
+<div class="container py-4" style="max-width:720px">
+  <div class="card shadow-sm"><div class="card-body p-4">
+    <h4 class="text-center mb-0">Sanskar Academy Classes</h4>
+    <div class="text-center text-muted mb-3">Salary slip - <span th:text="${p.monthName}"></span></div>
+    <table class="table table-sm">
+      <tr><th>Name</th><td th:text="${p.staff.user.fullName}"></td><th>Designation</th><td th:text="${p.staff.designation}"></td></tr>
+      <tr><th>Working days</th><td th:text="${p.workingDays}"></td><th>Absent / Leave / Half</th><td th:text="${p.absentDays} + ' / ' + ${p.leaveDays} + ' / ' + ${p.halfDays}"></td></tr>
+      <tr><th>Paid leave allowed</th><td th:text="${p.paidLeaveAllowed}"></td><th>Days cut</th><td th:text="${p.deductDays}"></td></tr>
+    </table>
+    <table class="table table-bordered">
+      <tr><td>Monthly salary</td><td class="text-end" th:text="${p.grossSalary}"></td></tr>
+      <tr><td>Leave cut (<span th:text="${p.deductDays}"></span> day x <span th:text="${p.perDay}"></span>)</td><td class="text-end" th:text="'- ' + ${p.leaveDeduction}"></td></tr>
+      <tr><td>Other deduction</td><td class="text-end" th:text="'- ' + ${p.otherDeduction}"></td></tr>
+      <tr><td>Bonus</td><td class="text-end" th:text="'+ ' + ${p.bonus}"></td></tr>
+      <tr class="table-success"><th>Net salary</th><th class="text-end" th:text="${p.netSalary}"></th></tr>
+    </table>
+    <div class="small text-muted">Status: <span th:text="${p.status}"></span> <span th:if="${p.paidDate != null}" th:text="'on ' + ${#temporals.format(p.paidDate,'dd MMM yyyy')}"></span>
+       <span th:if="${p.remarks != null}" th:text="' - ' + ${p.remarks}"></span></div>
+    <div class="no-print mt-3 d-flex gap-2"><button class="btn btn-primary" onclick="window.print()">Print</button><a class="btn btn-outline-secondary" th:href="@{${back}}">Back</a></div>
+  </div></div>
+</div></body></html>
